@@ -50,6 +50,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 .hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,7vw,6rem);font-weight:700;line-height:1.0;letter-spacing:-.02em;margin-bottom:24px;max-width:820px}
 .gr{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.gr2{background:linear-gradient(135deg,#2563ff,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:560px;line-height:1.7;margin-bottom:40px;font-weight:300}
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:56px}
 .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:600;padding:14px 32px;border-radius:10px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;box-shadow:0 8px 24px rgba(37,99,255,.3);transition:all .2s}
@@ -465,7 +466,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;ove
 <div class="slide slide-8" id="slide-8">
   <div class="slide-inner" style="display:flex;flex-direction:column;align-items:center">
     <div class="s-label fade" id="cta-label">Следующий шаг</div>
-    <h2 class="cta-h fade" id="cta-h"><span class="gr">Быть первым.</span><br>Или вторым.</h2>
+    <h2 class="cta-h fade" id="cta-h">Быть <span class="gr2">первым.</span><br>Или вторым.</h2>
     <p class="cta-sub fade" id="cta-sub">Запишитесь на демо — покажем как MX Systems работает для вашего бизнеса.</p>
     <div class="cta-btns fade">
       <button class="btn-white" id="cta-btn1" onclick="openModal('demo')">Получить демо</button>
@@ -565,7 +566,7 @@ const T = {
     'p2badge':'Рекомендуем','p2type':'Поддержка','p2period':'в месяц','p2btn':'Получить демо',
     'p2f1':'Поддержка 7 дней в неделю','p2f2':'Обновления и улучшения','p2f3':'Мониторинг работы системы','p2f4':'Аналитика и отчёты','p2f5':'Новые функции включены',
     'p-note':'При среднем чеке 1200 лей платформа окупается за <strong>2–3 месяца.</strong> Далее — чистая дополнительная выручка.',
-    'cta-label':'Следующий шаг','cta-h':'<span class="gr">Быть первым.</span><br>Или вторым.',
+    'cta-label':'Следующий шаг','cta-h':'Быть <span class="gr2">первым.</span><br>Или вторым.',
     'cta-sub':'Запишитесь на демо — покажем как MX Systems работает для вашего бизнеса.',
     'cta-btn1':'Получить демо','cta-btn2':'Запросить звонок',
     'cwa':'Телефон','cemail':'Email',
@@ -624,7 +625,7 @@ const T = {
     'p2badge':'Recomandat','p2type':'Suport','p2period':'pe lună','p2btn':'Obține demo',
     'p2f1':'Suport 7 zile pe săptămână','p2f2':'Actualizări și îmbunătățiri','p2f3':'Monitorizarea funcționării','p2f4':'Analiză și rapoarte','p2f5':'Funcții noi incluse',
     'p-note':'La un bon mediu de 1200 lei, platforma se amortizează în <strong>2–3 luni.</strong> Ulterior — venit suplimentar pur.',
-    'cta-label':'Pasul următor','cta-h':'<span class="gr">Să fii primul.</span><br>Sau al doilea.',
+    'cta-label':'Pasul următor','cta-h':'Să fii <span class="gr2">primul.</span><br>Sau al doilea.',
     'cta-sub':'Înregistrați-vă pentru demo — vă arătăm cum MX Systems funcționează pentru afacerea dvs.',
     'cta-btn1':'Obține demo','cta-btn2':'Solicită apel',
     'cwa':'Telefon','cemail':'Email',
@@ -682,7 +683,7 @@ const T = {
     'p2badge':'Recommended','p2type':'Support','p2period':'per month','p2btn':'Get demo',
     'p2f1':'Support 7 days a week','p2f2':'Updates and improvements','p2f3':'System monitoring','p2f4':'Analytics and reports','p2f5':'New features included',
     'p-note':'With an average check of 70 EUR, the platform pays off in <strong>2-3 months.</strong> Then — pure additional revenue.',
-    'cta-label':'Next step','cta-h':'<span class="gr">Be the first.</span><br>Or second.',
+    'cta-label':'Next step','cta-h':'Be the <span class="gr2">first.</span><br>Or second.',
     'cta-sub':'Book a demo — we will show how MX Systems works for your business.',
     'cta-btn1':'Get demo','cta-btn2':'Request a call',
     'cwa':'Phone','cemail':'Email',

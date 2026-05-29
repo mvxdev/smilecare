@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RestoAI — Демо</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#faf8f5;--white:#ffffff;--dark:#1c1917;
+  --accent:#b45309;--accent2:#d97706;--accent-light:#fef3c7;
+  --green:#059669;--red:#dc2626;--blue:#2563eb;--purple:#7c3aed;
+  --text:#1c1917;--muted:#78716c;--border:#e7e5e4;--border2:#d6d3d1;
+  --card:#ffffff;--sidebar:#fff;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--dark);height:56px;padding:0 24px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--accent2)}
+.logo-tag{font-size:11px;color:#78716c;letter-spacing:.08em;text-transform:uppercase}
+.lang-btns{display:flex;gap:4px;margin-left:auto}
+.lang-btn{padding:4px 12px;border-radius:6px;border:1px solid #44403c;background:transparent;cursor:pointer;font-size:12px;color:#a8a29e;font-family:'Inter',sans-serif;transition:all .15s}
+.lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* TABS */
+.tabs{display:flex;background:var(--dark);border-bottom:1px solid #292524;flex-shrink:0}
+.tab{flex:1;padding:13px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:#78716c;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;font-family:'Inter',sans-serif}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.tab .badge{background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:5px;vertical-align:middle}
+
+/* CONTENT */
+.content{flex:1;display:flex;overflow:hidden}
+.panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.panel.active{display:flex}
+
+/* SIDEBAR */
+.sidebar{width:280px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-title{font-size:13px;font-weight:600;font-family:'Playfair Display',serif}
+.sbadge{background:var(--accent);color:#fff;font-size:10px;padding:2px 7px;border-radius:8px;margin-left:auto}
+.dialog-list{overflow-y:auto;flex:1}
+.dialog{padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.dialog:hover{background:#fafaf9}
+.dialog.active{background:#fef3c7;border-left:3px solid var(--accent)}
+.dialog-name{font-size:13px;font-weight:600;margin-bottom:1px}
+.dialog-tag{font-size:11px;color:var(--accent);font-weight:500}
+.dialog-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.dialog-time{font-size:11px;color:var(--muted);float:right}
+.unread-dot{width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+
+/* CHAT */
+.chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--white);display:flex;align-items:center;gap:10px}
+.ch-name{font-weight:600;font-size:14px;font-family:'Playfair Display',serif}
+.ch-sub{font-size:12px;color:var(--muted)}
+.online-dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;background:#faf8f5}
+.msg{display:flex;gap:8px;align-items:flex-end;max-width:76%}
+.msg.bot{align-self:flex-start}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;font-family:'Playfair Display',serif;font-weight:700}
+.av.bot-av{background:var(--accent)}
+.av.user-av{background:#e7e5e4;color:var(--text)}
+.bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.55}
+.msg.bot .bubble{background:var(--white);border:1px solid var(--border);border-bottom-left-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.typing-wrap{display:flex;gap:8px;align-items:flex-end;align-self:flex-start}
+.typing{display:flex;gap:4px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:14px;border-bottom-left-radius:3px}
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce .8s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.quick-wrap{padding:8px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.qbtn{padding:5px 12px;border-radius:16px;border:1px solid var(--accent);color:var(--accent);background:#fff;cursor:pointer;font-size:12px;font-family:'Inter',sans-serif;transition:all .15s}
+.qbtn:hover{background:var(--accent-light)}
+.input-bar{padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px}
+.input-bar textarea{flex:1;border:1px solid var(--border2);border-radius:10px;padding:9px 14px;font-size:13px;resize:none;height:40px;font-family:'Inter',sans-serif;outline:none;background:var(--bg)}
+.input-bar textarea:focus{border-color:var(--accent);background:#fff}
+.send-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;font-size:16px;transition:background .15s}
+.send-btn:hover{background:var(--accent2)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 20px 0;flex-shrink:0}
+.stat-card{background:var(--white);border-radius:12px;padding:14px 16px;border:1px solid var(--border)}
+.stat-val{font-size:24px;font-weight:700;color:var(--accent);font-family:'Playfair Display',serif}
+.stat-label{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* BOOKINGS */
+.bookings-area{flex:1;overflow-y:auto;padding:16px 20px}
+.section-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.section-title{font-size:14px;font-weight:600;font-family:'Playfair Display',serif}
+.table-wrap{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+.t-head{display:grid;padding:10px 16px;background:#fafaf9;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted)}
+.t-row{display:grid;padding:11px 16px;border-bottom:1px solid var(--border);font-size:13px;align-items:center;transition:background .15s}
+.t-row:last-child{border-bottom:none}
+.t-row:hover{background:#fafaf9}
+.bk-head{grid-template-columns:1.4fr 80px 70px 100px 120px 140px}
+.bk-row{grid-template-columns:1.4fr 80px 70px 100px 120px 140px}
+.status-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:500;display:inline-block}
+.sb-confirmed{background:#d1fae5;color:#065f46}
+.sb-pending{background:#fef3c7;color:#92400e}
+.sb-cancelled{background:#fee2e2;color:#991b1b}
+.sb-seated{background:#dbeafe;color:#1e40af}
+.action-btn{border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:all .15s}
+.btn-cancel{background:#fee2e2;color:#991b1b}
+.btn-cancel:hover{background:#fecaca}
+.btn-seat{background:#dbeafe;color:#1e40af}
+.btn-seat:hover{background:#bfdbfe}
+.btn-disabled{background:#f3f4f6;color:#9ca3af;cursor:default}
+
+/* BROADCAST */
+.broadcast-area{flex:1;overflow-y:auto;padding:16px 20px}
+.campaign-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.campaign-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px;cursor:pointer;transition:all .2s}
+.campaign-card:hover{border-color:var(--accent);box-shadow:0 4px 12px rgba(180,83,9,.1)}
+.campaign-card.active-camp{border-color:var(--accent);background:var(--accent-light)}
+.camp-icon{font-size:24px;margin-bottom:8px}
+.camp-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.camp-desc{font-size:12px;color:var(--muted)}
+.camp-count{font-size:11px;color:var(--accent);font-weight:600;margin-top:6px}
+.pt-head{grid-template-columns:1.2fr 100px 130px 110px 120px}
+.pt-row{grid-template-columns:1.2fr 100px 130px 110px 120px}
+.pt-status{font-size:11px;padding:2px 8px;border-radius:8px}
+.pts-wait{background:#f3f4f6;color:#374151}
+.pts-gen{background:#fef3c7;color:#92400e}
+.pts-sent{background:#d1fae5;color:#065f46}
+.send-btn-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;transition:background .15s}
+.btn-primary:hover{background:var(--accent2)}
+.btn-primary:disabled{background:#d6d3d1;cursor:default}
+.progress-bar{background:#f3f4f6;border-radius:4px;height:5px;overflow:hidden;margin-top:10px}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+.log-item{background:var(--white);border-radius:8px;border:1px solid var(--border);padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:background .15s}
+.log-item:hover{background:#fafaf9}
+.log-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.log-name{font-size:13px;font-weight:600}
+.log-time{font-size:11px;color:var(--muted)}
+.log-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-full{font-size:13px;color:var(--text);line-height:1.5;margin-top:8px;display:none}
+.log-item.expanded .log-full{display:block}
+.show-more-btn{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px;width:100%;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);margin-top:6px}
+
+/* REVIEWS */
+.reviews-area{flex:1;overflow-y:auto;padding:16px 20px}
+.rev-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.rev-hdr{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.rev-av{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.rev-name{font-size:13px;font-weight:600}
+.rev-stars{color:#d97706;font-size:13px}
+.rev-date{font-size:11px;color:var(--muted);margin-left:auto;text-align:right}
+.rev-source{font-size:11px;color:var(--muted)}
+.rev-text{font-size:13px;color:#44403c;line-height:1.55;margin-bottom:10px}
+.rev-gen-btn{background:var(--accent-light);border:1px solid #fcd34d;border-radius:8px;padding:9px 14px;font-size:12px;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:8px;width:100%;font-family:'Inter',sans-serif;transition:all .15s}
+.rev-gen-btn:hover{background:#fde68a}
+.rev-gen-btn:disabled{opacity:.6;cursor:default}
+.rev-reply{background:#f0fdf4;border-radius:8px;padding:11px 14px;font-size:13px;color:#065f46;line-height:1.55;border:1px solid #bbf7d0}
+.ldots{display:inline-flex;gap:3px;vertical-align:middle}
+.ldots span{width:4px;height:4px;background:currentColor;border-radius:50%;animation:bounce .8s infinite}
+.ldots span:nth-child(2){animation-delay:.15s}
+.ldots span:nth-child(3){animation-delay:.3s}
+.hidden{display:none!important}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-ov.open{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:24px;width:460px;max-height:80vh;overflow-y:auto}
+.modal-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);padding:0}
+.modal-field{margin-bottom:12px}
+.modal-label{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.modal-select,.modal-input{width:100%;border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'Inter',sans-serif;outline:none;background:var(--bg)}
+.modal-select:focus,.modal-input:focus{border-color:var(--accent);background:#fff}
+.modal-textarea{width:100%;border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'Inter',sans-serif;resize:none;height:80px;outline:none;background:var(--bg)}
+.modal-textarea:focus{border-color:var(--accent);background:#fff}
+.modal-msg{background:var(--accent-light);border:1px solid #fcd34d;border-radius:8px;padding:12px;font-size:13px;color:var(--text);margin:12px 0;line-height:1.5}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-sec{background:#f5f5f4;color:var(--text);border:none;border-radius:8px;padding:9px 20px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif}
+.gen-status{font-size:12px;color:var(--muted);margin-top:8px;min-height:18px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Resto<span>AI</span></div>
+  <div class="logo-tag">Ресторан</div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('ru',this)">RU</button>
+    <button class="lang-btn" onclick="setLang('ro',this)">RO</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('chat',this)">💬 <span id="t-chat">Чат</span> <span class="badge" id="chat-badge">5</span></div>
+  <div class="tab" onclick="switchTab('bookings',this)">📅 <span id="t-bookings">Брони</span></div>
+  <div class="tab" onclick="switchTab('broadcast',this)">📤 <span id="t-broadcast">Рассылки</span></div>
+  <div class="tab" onclick="switchTab('reviews',this)">⭐ <span id="t-reviews">Репутация</span></div>
+</div>
+
+<div class="content">
+
+<!-- ── CHAT ── -->
+<div class="panel active" id="panel-chat" style="flex-direction:row">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title" id="lbl-dialogs">Диалоги</span>
+      <span class="sbadge" id="dlg-badge">5</span>
+    </div>
+    <div class="dialog-list" id="dialog-list"></div>
+  </div>
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="online-dot"></div>
+      <div>
+        <div class="ch-name" id="active-name">Попеску Андрей</div>
+        <div class="ch-sub" id="active-sub">WhatsApp · Онлайн</div>
+      </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="quick-wrap" id="quick-wrap"></div>
+    <div class="input-bar">
+      <textarea id="user-input" placeholder="Написать..."></textarea>
+      <button class="send-btn" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── BOOKINGS ── -->
+<div class="panel" id="panel-bookings">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="stat-today">12</div><div class="stat-label" id="lbl-today-b">Броней сегодня</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="stat-seated">7</div><div class="stat-label" id="lbl-seated">Гостей за столом</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent2)" id="stat-pending">3</div><div class="stat-label" id="lbl-pending">Ожидают</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--red)" id="stat-cancelled">2</div><div class="stat-label" id="lbl-cancelled">Отменено</div></div>
+  </div>
+  <div class="bookings-area">
+    <div class="section-hdr">
+      <div class="section-title" id="lbl-bookings-title">Активные брони</div>
+    </div>
+    <div class="table-wrap">
+      <div class="t-head bk-head">
+        <div id="bk-guest">Гость</div>
+        <div id="bk-time">Время</div>
+        <div id="bk-guests-n">Гостей</div>
+        <div id="bk-table">Столик</div>
+        <div id="bk-status">Статус</div>
+        <div id="bk-action">Действие</div>
+      </div>
+      <div id="bookings-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── BROADCAST ── -->
+<div class="panel" id="panel-broadcast">
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-card"><div class="stat-val">1 248</div><div class="stat-label" id="lbl-base-b">База гостей</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent2)">347</div><div class="stat-label" id="lbl-no-visit-b">Без визита 30+ дней</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">28 400 <span style="font-size:14px">лей</span></div><div class="stat-label" id="lbl-rev-b">Доп. выручка от рассылок</div></div>
+  </div>
+  <div class="broadcast-area">
+    <div class="section-title" style="margin-bottom:12px" id="lbl-campaigns">Кампании</div>
+    <div class="campaign-cards" id="campaign-cards"></div>
+    <div class="send-btn-row">
+      <div class="section-title" id="lbl-queue-b">В очереди</div>
+      <button class="btn-primary" id="btn-send-all" onclick="sendAll()"><span id="btn-send-all-text">▶ Запустить всех</span></button>
+    </div>
+    <div id="progress-wrap"></div>
+    <div class="table-wrap">
+      <div class="t-head pt-head">
+        <div id="pt-guest">Гость</div>
+        <div id="pt-visits">Посещений</div>
+        <div id="pt-last">Последний визит</div>
+        <div id="pt-reason">Повод</div>
+        <div id="pt-st">Статус</div>
+      </div>
+      <div id="pt-rows"></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="section-title" id="lbl-log">Отправленные</div>
+      <div id="log-list" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── REVIEWS ── -->
+<div class="panel" id="panel-reviews">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">412</div><div class="stat-label" id="lbl-total-rev">Всего отзывов</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">4.7 ★</div><div class="stat-label" id="lbl-rating">Средний рейтинг</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--accent2)" id="rev-counter">4</div><div class="stat-label" id="lbl-await-reply">Ждут ответа</div></div>
+    <div class="stat-card"><div class="stat-val">89%</div><div class="stat-label" id="lbl-resp-rate">Процент ответов</div></div>
+  </div>
+  <div class="reviews-area" id="reviews-list"></div>
+</div>
+
+</div><!-- /content -->
+
+<!-- MODAL -->
+<div class="modal-ov" id="modal-ov" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-title-text">Уведомить гостя</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label" id="ml-status">Новый статус</div>
+      <select class="modal-select" id="modal-status"></select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label" id="ml-comment">Комментарий (необязательно)</div>
+      <textarea class="modal-textarea" id="modal-comment" placeholder="Например: ваш столик у окна готов..."></textarea>
+    </div>
+    <div class="gen-status" id="gen-status"></div>
+    <div class="modal-msg hidden" id="modal-msg"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="modal-gen-btn" onclick="generateMsg()"><span id="modal-gen-text">Сгенерировать</span></button>
+      <button class="btn-primary hidden" id="modal-send-btn" onclick="sendModalMsg()"><span id="modal-send-text">Отправить</span></button>
+      <button class="btn-sec" onclick="closeModal()"><span id="modal-cancel-text">Отмена</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER = 'https://smilecare-proxy.badmvx7.workers.dev';
+let lang = 'ru';
+let activeDialog = 0;
+const convHistory = {};
+const bookingNotified = {};
+let currentBkIdx = null;
+let currentModalMsg = '';
+let activeCampaign = 0;
+const ptStates = {};
+const logItems = [];
+let revCount = 4;
+
+// ── TRANSLATIONS ──
+const TR = {
+  ru: {
+    't-chat':'Чат','t-bookings':'Брони','t-broadcast':'Рассылки','t-reviews':'Репутация',
+    'lbl-dialogs':'Диалоги',
+    'lbl-today-b':'Броней сегодня','lbl-seated':'Гостей за столом','lbl-pending':'Ожидают','lbl-cancelled':'Отменено',
+    'lbl-bookings-title':'Активные брони',
+    'bk-guest':'Гость','bk-time':'Время','bk-guests-n':'Гостей','bk-table':'Столик','bk-status':'Статус','bk-action':'Действие',
+    'lbl-base-b':'База гостей','lbl-no-visit-b':'Без визита 30+ дней','lbl-rev-b':'Доп. выручка от рассылок',
+    'lbl-campaigns':'Кампании','lbl-queue-b':'В очереди',
+    'pt-guest':'Гость','pt-visits':'Посещений','pt-last':'Последний визит','pt-reason':'Повод','pt-st':'Статус',
+    'lbl-log':'Отправленные',
+    'lbl-total-rev':'Всего отзывов','lbl-rating':'Средний рейтинг','lbl-await-reply':'Ждут ответа','lbl-resp-rate':'Процент ответов',
+    'ml-status':'Новый статус','ml-comment':'Комментарий (необязательно)',
+    'modal-gen-text':'Сгенерировать','modal-send-text':'Отправить','modal-cancel-text':'Отмена',
+    placeholder:'Написать...',
+    active_sub:'WhatsApp · Онлайн',
+    quickReplies:['Забронировать','Меню','Адрес','Отменить бронь','Мероприятия'],
+    bk_statuses:{confirmed:'Подтверждено',pending:'Ожидание',seated:'За столом',cancelled:'Отменено'},
+    bk_st_classes:{confirmed:'sb-confirmed',pending:'sb-pending',seated:'sb-seated',cancelled:'sb-cancelled'},
+    btn_cancel_text:'Отменить',btn_seat_text:'Посадить',
+    modal_status_opts:['Столик готов','Ожидайте немного','Столик отменён','Добро пожаловать!'],
+    modal_status_vals:['ready','wait','cancelled','welcome'],
+    pt_statuses:{wait:'Ожидание',gen:'AI готовит...',sent:'Отправлено'},
+    btn_send_all:'▶ Запустить всех',btn_sent_all:'✓ Отправлено всем',
+    rev_gen_btn:'✦ AI готовит ответ — нажмите для генерации',
+    campaigns:[
+      {icon:'🎉',title:'Возврат гостей',desc:'Не были 30+ дней',count:'347 гостей'},
+      {icon:'🎂',title:'Дни рождения',desc:'Именинники этой недели',count:'12 гостей'},
+      {icon:'🎭',title:'Мероприятия',desc:'Живая музыка в пятницу',count:'248 гостей'},
+    ],
+    greet:'Добрый день! 🍽️\n\nЯ AI-ассистент ресторана RestoAI. Помогу забронировать столик, расскажу о мероприятиях и отвечу на любые вопросы.\n\nЧем могу помочь?',
+    sys:`Ты AI-ассистент ресторана RestoAI (Кишинёв, Молдова). Общаешься с гостями в WhatsApp.
+Правила:
+- Отвечай тепло, вежливо, профессионально (1-4 предложения)
+- Ресторан работает Вт-Вс 12:00-23:00, понедельник — выходной
+- Вместимость: 60 мест, 15 столиков (на 2, 4, 6 человек)
+- Для бронирования уточняй: дата, время, количество гостей, имя
+- Подтверждай бронь: "Отлично! Забронировал вам столик на [дата] в [время] на [N] человек"
+- Отмена брони: принимай и подтверждай отмену вежливо
+- Мероприятия: каждую пятницу живая музыка с 20:00, каждое воскресенье бранч с 11:00
+- Список ожидания: если нет мест — предлагай записать в лист ожидания
+- Язык: строго русский`,
+    modal_sys:`Ты администратор ресторана RestoAI. Напиши короткое вежливое WhatsApp-сообщение гостю о статусе его брони. Максимум 2-3 предложения. Без звёздочек и форматирования.`,
+    camp_sys:`Ты менеджер ресторана RestoAI. Напиши персональное WhatsApp-сообщение гостю для кампании рассылки. Тепло, кратко, с призывом к действию. Максимум 2-3 предложения.`,
+    rev_sys:`Ты менеджер ресторана RestoAI. Напиши короткий, искренний и тёплый ответ на отзыв в Google Maps. Максимум 2-3 предложения. Без звёздочек.`,
+  },
+  ro: {
+    't-chat':'Chat','t-bookings':'Rezervări','t-broadcast':'Notificări','t-reviews':'Reputație',
+    'lbl-dialogs':'Dialoguri',
+    'lbl-today-b':'Rezervări azi','lbl-seated':'Oaspeți la masă','lbl-pending':'Așteaptă','lbl-cancelled':'Anulate',
+    'lbl-bookings-title':'Rezervări active',
+    'bk-guest':'Oaspete','bk-time':'Ora','bk-guests-n':'Persoane','bk-table':'Masă','bk-status':'Status','bk-action':'Acțiune',
+    'lbl-base-b':'Baza de oaspeți','lbl-no-visit-b':'Fără vizită 30+ zile','lbl-rev-b':'Venit suplimentar',
+    'lbl-campaigns':'Campanii','lbl-queue-b':'În coadă',
+    'pt-guest':'Oaspete','pt-visits':'Vizite','pt-last':'Ultima vizită','pt-reason':'Motiv','pt-st':'Status',
+    'lbl-log':'Trimise',
+    'lbl-total-rev':'Total recenzii','lbl-rating':'Rating mediu','lbl-await-reply':'Așteaptă răspuns','lbl-resp-rate':'Rata răspunsuri',
+    'ml-status':'Status nou','ml-comment':'Comentariu (opțional)',
+    'modal-gen-text':'Generează','modal-send-text':'Trimite','modal-cancel-text':'Anulează',
+    placeholder:'Scrie...',
+    active_sub:'WhatsApp · Online',
+    quickReplies:['Rezervare','Meniu','Adresă','Anulare rezervare','Evenimente'],
+    bk_statuses:{confirmed:'Confirmat',pending:'În așteptare',seated:'La masă',cancelled:'Anulat'},
+    bk_st_classes:{confirmed:'sb-confirmed',pending:'sb-pending',seated:'sb-seated',cancelled:'sb-cancelled'},
+    btn_cancel_text:'Anulează',btn_seat_text:'Plasează',
+    modal_status_opts:['Masa e gata','Așteptați puțin','Rezervare anulată','Bine ați venit!'],
+    modal_status_vals:['ready','wait','cancelled','welcome'],
+    pt_statuses:{wait:'Așteptare',gen:'AI generează...',sent:'Trimis'},
+    btn_send_all:'▶ Lansează tuturor',btn_sent_all:'✓ Trimis tuturor',
+    rev_gen_btn:'✦ AI pregătește răspuns — apasă pentru generare',
+    campaigns:[
+      {icon:'🎉',title:'Revenire oaspeți',desc:'Fără vizită 30+ zile',count:'347 oaspeți'},
+      {icon:'🎂',title:'Zile de naștere',desc:'Aniversări săptămâna aceasta',count:'12 oaspeți'},
+      {icon:'🎭',title:'Evenimente',desc:'Muzică live vineri seara',count:'248 oaspeți'},
+    ],
+    greet:'Bună ziua! 🍽️\n\nSunt asistentul AI al restaurantului RestoAI. Vă pot ajuta să rezervați o masă, să aflați despre evenimente și să răspund la orice întrebări.\n\nCu ce vă pot ajuta?',
+    sys:`Ești asistentul AI al restaurantului RestoAI (Chișinău, Moldova). Comunici cu oaspeții pe WhatsApp.
+Reguli:
+- Răspunde cald, politicos, profesionist (1-4 propoziții)
+- Restaurantul lucrează Ma-Du 12:00-23:00, luni — zi liberă
+- Capacitate: 60 locuri, 15 mese (pentru 2, 4, 6 persoane)
+- Pentru rezervare clarifică: data, ora, numărul de persoane, numele
+- Confirmă rezervarea: "Perfect! Am rezervat masa pe [data] la [ora] pentru [N] persoane"
+- Anulare rezervare: acceptă și confirmă anularea politicos
+- Evenimente: în fiecare vineri muzică live de la 20:00, în fiecare duminică brunch de la 11:00
+- Lista de așteptare: dacă nu sunt locuri — propune înscrierea în lista de așteptare
+- Limba: strict română`,
+    modal_sys:`Ești administratorul restaurantului RestoAI. Scrie un mesaj WhatsApp scurt și politicos pentru oaspete despre statusul rezervării. Max 2-3 propoziții. Fără asteriscuri.`,
+    camp_sys:`Ești managerul restaurantului RestoAI. Scrie un mesaj WhatsApp personalizat pentru oaspete pentru campania de notificare. Cald, scurt, cu îndemn la acțiune. Max 2-3 propoziții.`,
+    rev_sys:`Ești managerul restaurantului RestoAI. Scrie un răspuns scurt, sincer și cald la o recenzie pe Google Maps. Max 2-3 propoziții. Fără asteriscuri.`,
+  }
+};
+
+// ── DATA ──
+const dialogs = {
+  ru:[
+    {id:'popescu',name:'Попеску Андрей',tag:'Столик на 4, пятница',preview:'Можно забронировать на 20:00?',time:'12:34',unread:true},
+    {id:'lungu',name:'Лунгу Елена',tag:'День рождения',preview:'Хотим отметить день рождения',time:'12:20',unread:true},
+    {id:'ciobanu',name:'Чобану Виктор',tag:'Бронь отменена',preview:'Нам придётся отменить бронь',time:'12:05',unread:true},
+    {id:'rusu',name:'Руссу Наталья',tag:'Столик на 2',preview:'Есть места на сегодня вечером?',time:'11:50',unread:true},
+    {id:'munteanu',name:'Мунтяну Дмитрий',tag:'Мероприятие',preview:'Когда следующий живой концерт?',time:'11:35',unread:true},
+    {id:'bodnar',name:'Боднарь Ирина',tag:'Столик на 6',preview:'Корпоратив на 6 человек',time:'11:20'},
+    {id:'popa',name:'Попа Сергей',tag:'Аллергия',preview:'Есть ли блюда без глютена?',time:'11:00'},
+    {id:'grosu',name:'Гросу Марина',tag:'Подтверждение',preview:'Жду подтверждения брони',time:'10:45'},
+    {id:'rotaru',name:'Ротарь Алексей',tag:'Бранч',preview:'Воскресный бранч — есть места?',time:'10:30'},
+    {id:'cojocaru',name:'Кожокару Анна',tag:'Список ожидания',preview:'Запишите нас в лист ожидания',time:'10:15'},
+    {id:'apostol',name:'Апостол Михаил',tag:'Столик у окна',preview:'Можно столик с видом на сад?',time:'10:00'},
+    {id:'balan',name:'Балан Татьяна',tag:'Спасибо',preview:'Всё было великолепно, спасибо!',time:'09:45'},
+  ],
+  ro:[
+    {id:'ionescu',name:'Ionescu Andrei',tag:'Masă pentru 4, vineri',preview:'Pot rezerva pentru ora 20:00?',time:'12:34',unread:true},
+    {id:'lupu',name:'Lupu Elena',tag:'Zi de naștere',preview:'Vrem să sărbătorim ziua de naștere',time:'12:20',unread:true},
+    {id:'ciobanu2',name:'Ciobanu Victor',tag:'Rezervare anulată',preview:'Trebuie să anulăm rezervarea',time:'12:05',unread:true},
+    {id:'rusu2',name:'Rusu Natalia',tag:'Masă pentru 2',preview:'Aveți locuri disponibile astăzi?',time:'11:50',unread:true},
+    {id:'munteanu2',name:'Munteanu Dmitri',tag:'Eveniment',preview:'Când e următorul concert live?',time:'11:35',unread:true},
+    {id:'bodnar2',name:'Bodnar Irina',tag:'Masă pentru 6',preview:'Petrecere corporativă pentru 6',time:'11:20'},
+    {id:'popa2',name:'Popa Sergiu',tag:'Alergii',preview:'Există mâncăruri fără gluten?',time:'11:00'},
+    {id:'grosu2',name:'Grosu Marina',tag:'Confirmare',preview:'Aștept confirmarea rezervării',time:'10:45'},
+    {id:'rotaru2',name:'Rotaru Alexei',tag:'Brunch',preview:'Brunch duminical — mai sunt locuri?',time:'10:30'},
+    {id:'cojocaru2',name:'Cojocaru Ana',tag:'Listă de așteptare',preview:'Puteți să mă treceți pe lista?',time:'10:15'},
+    {id:'apostol2',name:'Apostol Mihail',tag:'Masă la fereastră',preview:'Pot cere masa cu vedere la grădină?',time:'10:00'},
+    {id:'balan2',name:'Balan Tatiana',tag:'Mulțumire',preview:'Totul a fost magnific, mulțumesc!',time:'09:45'},
+  ]
+};
+
+const bookings = {
+  ru:[
+    {name:'Попеску Андрей',time:'19:00',guests:4,table:'Столик 7',status:'confirmed'},
+    {name:'Лунгу Елена',time:'19:30',guests:6,table:'Столик 12',status:'confirmed'},
+    {name:'Руссу Наталья',time:'20:00',guests:2,table:'Столик 3',status:'seated'},
+    {name:'Мунтяну Дмитрий',time:'20:00',guests:3,table:'Столик 9',status:'seated'},
+    {name:'Боднарь Ирина',time:'20:30',guests:6,table:'Столик 15',status:'pending'},
+    {name:'Попа Сергей',time:'21:00',guests:2,table:'Столик 5',status:'pending'},
+    {name:'Гросу Марина',time:'21:00',guests:4,table:'Столик 11',status:'pending'},
+    {name:'Ротарь Алексей',time:'21:30',guests:4,table:'Столик 8',status:'confirmed'},
+    {name:'Кожокару Анна',time:'22:00',guests:2,table:'Столик 2',status:'confirmed'},
+    {name:'Апостол Михаил',time:'13:00',guests:3,table:'—',status:'cancelled'},
+    {name:'Балан Татьяна',time:'14:30',guests:4,table:'—',status:'cancelled'},
+    {name:'Чобану Виктор',time:'19:00',guests:4,table:'—',status:'cancelled'},
+  ],
+  ro:[
+    {name:'Ionescu Andrei',time:'19:00',guests:4,table:'Masa 7',status:'confirmed'},
+    {name:'Lupu Elena',time:'19:30',guests:6,table:'Masa 12',status:'confirmed'},
+    {name:'Rusu Natalia',time:'20:00',guests:2,table:'Masa 3',status:'seated'},
+    {name:'Munteanu Dmitri',time:'20:00',guests:3,table:'Masa 9',status:'seated'},
+    {name:'Bodnar Irina',time:'20:30',guests:6,table:'Masa 15',status:'pending'},
+    {name:'Popa Sergiu',time:'21:00',guests:2,table:'Masa 5',status:'pending'},
+    {name:'Grosu Marina',time:'21:00',guests:4,table:'Masa 11',status:'pending'},
+    {name:'Rotaru Alexei',time:'21:30',guests:4,table:'Masa 8',status:'confirmed'},
+    {name:'Cojocaru Ana',time:'22:00',guests:2,table:'Masa 2',status:'confirmed'},
+    {name:'Apostol Mihail',time:'13:00',guests:3,table:'—',status:'cancelled'},
+    {name:'Balan Tatiana',time:'14:30',guests:4,table:'—',status:'cancelled'},
+    {name:'Ciobanu Victor',time:'19:00',guests:4,table:'—',status:'cancelled'},
+  ]
+};
+
+const ptData = {
+  ru:[
+    {name:'Апостол Михаил',visits:8,last:'28 апр 2025',reason:'Возврат'},
+    {name:'Балан Татьяна',visits:5,last:'20 апр 2025',reason:'День рождения'},
+    {name:'Кожокару Анна',visits:12,last:'15 апр 2025',reason:'Мероприятие'},
+    {name:'Ротарь Алексей',visits:3,last:'10 апр 2025',reason:'Возврат'},
+    {name:'Дану Виктор',visits:7,last:'5 апр 2025',reason:'День рождения'},
+    {name:'Негру Анна',visits:9,last:'1 апр 2025',reason:'Мероприятие'},
+    {name:'Влад Сергей',visits:4,last:'28 мар 2025',reason:'Возврат'},
+    {name:'Мокану Ирина',visits:6,last:'20 мар 2025',reason:'День рождения'},
+    {name:'Чобану Анна',visits:2,last:'15 мар 2025',reason:'Возврат'},
+    {name:'Брага Николай',visits:11,last:'10 мар 2025',reason:'Мероприятие'},
+  ],
+  ro:[
+    {name:'Apostol Mihail',visits:8,last:'28 apr 2025',reason:'Revenire'},
+    {name:'Balan Tatiana',visits:5,last:'20 apr 2025',reason:'Zi de naștere'},
+    {name:'Cojocaru Ana',visits:12,last:'15 apr 2025',reason:'Eveniment'},
+    {name:'Rotaru Alexei',visits:3,last:'10 apr 2025',reason:'Revenire'},
+    {name:'Danu Victor',visits:7,last:'5 apr 2025',reason:'Zi de naștere'},
+    {name:'Negru Ana',visits:9,last:'1 apr 2025',reason:'Eveniment'},
+    {name:'Vlad Sergiu',visits:4,last:'28 mar 2025',reason:'Revenire'},
+    {name:'Mocanu Irina',visits:6,last:'20 mar 2025',reason:'Zi de naștere'},
+    {name:'Ciobanu Ana',visits:2,last:'15 mar 2025',reason:'Revenire'},
+    {name:'Braga Nicolae',visits:11,last:'10 mar 2025',reason:'Eveniment'},
+  ]
+};
+
+const reviews = [
+  {name:'Татьяна Б.',stars:5,date:'сегодня / azi',text:'Вечер прошёл великолепно! Атмосфера, кухня, обслуживание — всё на высшем уровне. Обязательно вернёмся.',answered:true,reply:'Татьяна, благодарим за такие тёплые слова! Очень рады, что вечер удался. Ждём вас снова — всегда рады видеть!'},
+  {name:'Михаил Д.',stars:4,date:'вчера / ieri',text:'Отличная кухня, особенно понравилась утиная грудка. Единственный минус — пришлось немного подождать столик.',answered:false},
+  {name:'Maria C.',stars:5,date:'2 zile / 2 дня',text:'Am venit la brunch duminical și a fost fantastic! Meniul este variat, prețurile rezonabile, personalul foarte amabil.',answered:false},
+  {name:'Alexandru R.',stars:5,date:'3 zile / 3 дня',text:'Atmosferă deosebită, mâncare excelentă. Am sărbătorit aniversarea și totul a fost perfect organizat. Recomand cu căldură!',answered:true,reply:'Alexandru, vă mulțumim mult! Ne bucurăm că aniversarea a fost una de neuitat. Pe curând!'},
+  {name:'Анастасия В.',stars:4,date:'4 дня / 4 zile',text:'Заказала столик через бота — очень удобно! Пришли, всё было готово. Живая музыка в пятницу — отдельный плюс.',answered:false},
+];
+
+const bkStatus = {}; // overrides for booking statuses
+
+// ── LANGUAGE ──
+function setLang(l, btn) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const t = TR[l];
+  const ids = ['t-chat','t-bookings','t-broadcast','t-reviews','lbl-dialogs',
+    'lbl-today-b','lbl-seated','lbl-pending','lbl-cancelled','lbl-bookings-title',
+    'bk-guest','bk-time','bk-guests-n','bk-table','bk-status','bk-action',
+    'lbl-base-b','lbl-no-visit-b','lbl-rev-b','lbl-campaigns','lbl-queue-b',
+    'pt-guest','pt-visits','pt-last','pt-reason','pt-st','lbl-log',
+    'lbl-total-rev','lbl-rating','lbl-await-reply','lbl-resp-rate',
+    'ml-status','ml-comment'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el && t[id]) el.textContent = t[id];
+  });
+  document.getElementById('user-input').placeholder = t.placeholder;
+  document.getElementById('btn-send-all-text').textContent = t.btn_send_all;
+  renderDialogs(); renderBookings(); renderCampaigns(); renderPt(); renderReviews();
+}
+
+// ── TABS ──
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+// ── DIALOGS ──
+let unreadCount = 5;
+function renderDialogs() {
+  const list = dialogs[lang];
+  document.getElementById('dialog-list').innerHTML = list.map((d,i) => `
+    <div class="dialog${i===activeDialog?' active':''}" onclick="selectDialog(${i})" id="dlg-${i}">
+      <span class="dialog-time">${d.time}</span>
+      ${d.unread?`<span class="unread-dot"></span>`:''}
+      <div class="dialog-name">${d.name}</div>
+      <div class="dialog-tag">${d.tag}</div>
+      <div class="dialog-preview">${d.preview}</div>
+    </div>
+  `).join('');
+}
+
+function selectDialog(i) {
+  const list = dialogs[lang];
+  if(list[i].unread) {
+    list[i].unread = false;
+    unreadCount = Math.max(0, unreadCount-1);
+    const cb = document.getElementById('chat-badge');
+    const db = document.getElementById('dlg-badge');
+    if(unreadCount === 0){ cb.style.display='none'; db.style.display='none'; }
+    else { cb.textContent = unreadCount; db.textContent = unreadCount; cb.style.display=''; db.style.display=''; }
+  }
+  activeDialog = i;
+  renderDialogs();
+  const d = list[i];
+  document.getElementById('active-name').textContent = d.name;
+  document.getElementById('active-sub').textContent = TR[lang].active_sub;
+  if(!convHistory[lang+'_'+i]) {
+    convHistory[lang+'_'+i] = [{role:'bot', text:TR[lang].greet}];
+    if(d.preview && i > 0) convHistory[lang+'_'+i].push({role:'user', text:d.preview});
+  }
+  renderChat(lang+'_'+i);
+  renderQuick();
+}
+
+function renderChat(key) {
+  const msgs = convHistory[key] || [];
+  const el = document.getElementById('chat-msgs');
+  el.innerHTML = msgs.map(m => `
+    <div class="msg ${m.role}">
+      ${m.role==='bot'
+        ? '<div class="av bot-av">R</div>'
+        : '<div class="av user-av">👤</div>'}
+      <div><div class="bubble">${m.text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div></div>
+    </div>
+  `).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderQuick() {
+  document.getElementById('quick-wrap').innerHTML = TR[lang].quickReplies.map(q =>
+    `<button class="qbtn" onclick="sendQuick('${q.replace(/'/g,"\\'")}')">${q}</button>`
+  ).join('');
+}
+
+async function sendQuick(text) { await doSend(text); }
+async function sendMsg() {
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if(!text) return;
+  inp.value = '';
+  await doSend(text);
+}
+document.getElementById('user-input').addEventListener('keydown', e => {
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
+});
+
+async function doSend(text) {
+  const key = lang+'_'+activeDialog;
+  if(!convHistory[key]) convHistory[key] = [];
+  convHistory[key].push({role:'user', text});
+  renderChat(key);
+
+  const el = document.getElementById('chat-msgs');
+  const tw = document.createElement('div');
+  tw.className = 'typing-wrap';
+  tw.innerHTML = '<div class="av bot-av">R</div><div class="typing"><span></span><span></span><span></span></div>';
+  el.appendChild(tw); el.scrollTop = el.scrollHeight;
+
+  const msgs = convHistory[key]
+    .map(m => ({role: m.role==='bot'?'assistant':'user', content: m.text}));
+  if(msgs[0]?.role==='assistant') msgs.shift();
+
+  try {
+    const resp = await fetch(WORKER, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-opus-4-5', max_tokens:350, system:TR[lang].sys, messages:msgs})
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || '...';
+    tw.remove();
+    convHistory[key].push({role:'bot', text:reply});
+    renderChat(key);
+  } catch(e) {
+    tw.remove();
+    convHistory[key].push({role:'bot', text: lang==='ro'?'Eroare de conexiune.':'Ошибка соединения.'});
+    renderChat(key);
+  }
+}
+
+// ── BOOKINGS ──
+function renderBookings() {
+  const list = bookings[lang];
+  const t = TR[lang];
+  document.getElementById('bookings-rows').innerHTML = list.map((b,i) => {
+    const st = bkStatus[i] || b.status;
+    const stLabel = t.bk_statuses[st] || st;
+    const stClass = t.bk_st_classes[st] || '';
+    let actionBtn = '';
+    if(st === 'confirmed' || st === 'pending') {
+      actionBtn = `<div style="display:flex;gap:6px">
+        <button class="action-btn btn-seat" onclick="seatGuest(${i})">${t.btn_seat_text}</button>
+        <button class="action-btn btn-cancel" onclick="cancelBooking(${i})">${t.btn_cancel_text}</button>
+      </div>`;
+    } else if(st === 'seated') {
+      actionBtn = `<button class="action-btn btn-cancel" onclick="cancelBooking(${i})">${t.btn_cancel_text}</button>`;
+    } else {
+      actionBtn = `<span style="font-size:12px;color:var(--muted)">—</span>`;
+    }
+    return `<div class="t-row bk-row">
+      <div><b>${b.name}</b></div>
+      <div style="font-size:13px">${b.time}</div>
+      <div style="font-size:13px">${b.guests}</div>
+      <div style="font-size:12px">${b.table}</div>
+      <div><span class="status-badge ${stClass}">${stLabel}</span></div>
+      <div>${actionBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function seatGuest(i) {
+  bkStatus[i] = 'seated';
+  renderBookings();
+}
+
+function cancelBooking(i) {
+  bkStatus[i] = 'cancelled';
+  const list = bookings[lang];
+  list[i].table = '—';
+  renderBookings();
+}
+
+// ── MODAL ──
+function openModal(i) {
+  currentBkIdx = i;
+  currentModalMsg = '';
+  const t = TR[lang];
+  const bk = bookings[lang][i];
+  document.getElementById('modal-title-text').textContent = `${bk.name} — ${bk.time}`;
+  document.getElementById('ml-status').textContent = t['ml-status'];
+  document.getElementById('ml-comment').textContent = t['ml-comment'];
+  document.getElementById('modal-gen-text').textContent = t['modal-gen-text'];
+  document.getElementById('modal-send-text').textContent = t['modal-send-text'];
+  document.getElementById('modal-cancel-text').textContent = t['modal-cancel-text'];
+  const sel = document.getElementById('modal-status');
+  sel.innerHTML = t.modal_status_opts.map((o,j) => `<option value="${t.modal_status_vals[j]}">${o}</option>`).join('');
+  document.getElementById('modal-comment').value = '';
+  document.getElementById('modal-comment').placeholder = lang==='ro'?'De exemplu: masa dvs lângă fereastră este gata...':'Например: ваш столик у окна готов...';
+  document.getElementById('gen-status').textContent = '';
+  document.getElementById('modal-msg').classList.add('hidden');
+  document.getElementById('modal-gen-btn').classList.remove('hidden');
+  document.getElementById('modal-send-btn').classList.add('hidden');
+  document.getElementById('modal-ov').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-ov').classList.remove('open');
+}
+
+async function generateMsg() {
+  const bk = bookings[lang][currentBkIdx];
+  const statusVal = document.getElementById('modal-status').value;
+  const statusLabel = TR[lang].modal_status_opts[TR[lang].modal_status_vals.indexOf(statusVal)];
+  const comment = document.getElementById('modal-comment').value;
+  const gs = document.getElementById('gen-status');
+  gs.innerHTML = `<div class="ldots"><span></span><span></span><span></span></div> ${lang==='ro'?'AI generează...':'AI генерирует...'}`;
+  document.getElementById('modal-gen-btn').classList.add('hidden');
+
+  const userMsg = lang==='ro'
+    ? `Oaspete: ${bk.name}. Ora rezervării: ${bk.time}. Persoane: ${bk.guests}. Status: ${statusLabel}. ${comment?'Comentariu: '+comment:''}`
+    : `Гость: ${bk.name}. Время брони: ${bk.time}. Гостей: ${bk.guests}. Статус: ${statusLabel}. ${comment?'Комментарий: '+comment:''}`;
+
+  try {
+    const resp = await fetch(WORKER, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-opus-4-5', max_tokens:200, system:TR[lang].modal_sys, messages:[{role:'user',content:userMsg}]})
+    });
+    const data = await resp.json();
+    currentModalMsg = data.content?.[0]?.text || '...';
+    gs.textContent = '';
+    const box = document.getElementById('modal-msg');
+    box.textContent = currentModalMsg;
+    box.classList.remove('hidden');
+    document.getElementById('modal-send-btn').classList.remove('hidden');
+  } catch(e) {
+    gs.textContent = lang==='ro'?'Eroare. Încearcă din nou.':'Ошибка. Попробуйте снова.';
+    document.getElementById('modal-gen-btn').classList.remove('hidden');
+  }
+}
+
+function sendModalMsg() {
+  const bk = bookings[lang][currentBkIdx];
+  logItems.unshift({name:bk.name, tag:bk.time, msg:currentModalMsg, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+  bookingNotified[currentBkIdx] = true;
+  closeModal();
+  renderPtLog();
+}
+
+// ── CAMPAIGNS ──
+function renderCampaigns() {
+  const camps = TR[lang].campaigns;
+  document.getElementById('campaign-cards').innerHTML = camps.map((c,i) => `
+    <div class="campaign-card${i===activeCampaign?' active-camp':''}" onclick="selectCampaign(${i})">
+      <div class="camp-icon">${c.icon}</div>
+      <div class="camp-title">${c.title}</div>
+      <div class="camp-desc">${c.desc}</div>
+      <div class="camp-count">${c.count}</div>
+    </div>
+  `).join('');
+}
+
+function selectCampaign(i) {
+  activeCampaign = i;
+  renderCampaigns();
+  renderPt();
+}
+
+// ── PATIENTS ──
+const SHOW_PT = 10;
+function renderPt() {
+  const allList = ptData[lang];
+  const t = TR[lang];
+  // Filter by campaign: 0=Возврат, 1=Дни рождения, 2=Мероприятия
+  const reasonMap = {
+    ru: [['Возврат'], ['День рождения'], ['Мероприятие']],
+    ro: [['Revenire'], ['Zi de naștere'], ['Eveniment']]
+  };
+  const reasons = reasonMap[lang][activeCampaign];
+  const list = allList.filter(p => reasons.includes(p.reason));
+  const shown = list.slice(0, SHOW_PT);
+  document.getElementById('lbl-queue-b').textContent = `${t['lbl-queue-b'].split('(')[0]}(${list.length})`;
+  document.getElementById('pt-rows').innerHTML = shown.map((p,i) => {
+    const idx = allList.indexOf(p);
+    const st = ptStates[idx] || 'wait';
+    const stHtml = `<span class="pt-status pts-${st}">${t.pt_statuses[st]}</span>`;
+    return `<div class="t-row pt-row">
+      <div>${p.name}</div>
+      <div style="font-size:12px">${p.visits}</div>
+      <div style="font-size:12px">${p.last}</div>
+      <div style="font-size:12px">${p.reason}</div>
+      <div>${stHtml}</div>
+    </div>`;
+  }).join('');
+  renderPtLog();
+}
+
+async function sendAll() {
+  const allList = ptData[lang];
+  const reasonMap = {
+    ru: [['Возврат'], ['День рождения'], ['Мероприятие']],
+    ro: [['Revenire'], ['Zi de naștere'], ['Eveniment']]
+  };
+  const reasons = reasonMap[lang][activeCampaign];
+  const list = allList.filter(p => reasons.includes(p.reason));
+  const t = TR[lang];
+  const btn = document.getElementById('btn-send-all');
+  btn.disabled = true;
+
+  const wrap = document.getElementById('progress-wrap');
+  wrap.innerHTML = '<div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>';
+
+  const camp = TR[lang].campaigns[activeCampaign];
+  const campSys = TR[lang].camp_sys;
+  for(let i=0; i<list.length; i++) {
+    const idx = allList.indexOf(list[i]);
+    ptStates[idx] = 'gen';
+    renderPt();
+    let msg = '';
+    try {
+      const userMsg = lang === 'ro'
+        ? `Oaspete: ${list[i].name}. Vizite anterioare: ${list[i].visits}. Ultima vizită: ${list[i].last}. Motiv: ${list[i].reason}.`
+        : `Гость: ${list[i].name}. Посещений: ${list[i].visits}. Последний визит: ${list[i].last}. Повод: ${list[i].reason}.`;
+      const resp = await fetch(WORKER, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({model:'claude-opus-4-5', max_tokens:150, system:campSys,
+          messages:[{role:'user', content:userMsg}]})
+      });
+      const data = await resp.json();
+      msg = data.content?.[0]?.text || `${camp.icon} ${camp.title}`;
+    } catch(e) {
+      msg = `${camp.icon} ${camp.title}: ${list[i].reason}`;
+    }
+    ptStates[idx] = 'sent';
+    logItems.unshift({
+      name: list[i].name,
+      tag: camp.title,
+      msg,
+      time: new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})
+    });
+    renderPt();
+    const prog = document.getElementById('prog');
+    if(prog) prog.style.width = ((i+1)/list.length*100)+'%';
+  }
+  document.getElementById('btn-send-all-text').textContent = t.btn_sent_all;
+  setTimeout(() => { wrap.innerHTML = ''; }, 2000);
+}
+
+function renderPtLog() {
+  const el = document.getElementById('log-list');
+  const shown = logItems.slice(0,5);
+  el.innerHTML = shown.map(l => `
+    <div class="log-item" onclick="this.classList.toggle('expanded')">
+      <div class="log-hdr">
+        <span class="log-name">${l.name} · <span style="color:var(--accent);font-size:11px">${l.tag}</span></span>
+        <span class="log-time">${l.time}</span>
+      </div>
+      <div class="log-preview">${l.msg}</div>
+      <div class="log-full">${l.msg}</div>
+    </div>
+  `).join('');
+  if(logItems.length > 5) {
+    el.innerHTML += `<button class="show-more-btn" onclick="showAllLog()">${lang==='ro'?`Arată tot (${logItems.length})`:`Показать все (${logItems.length})`} ▼</button>`;
+  }
+}
+
+function showAllLog() {
+  const el = document.getElementById('log-list');
+  el.innerHTML = logItems.map(l => `
+    <div class="log-item" onclick="this.classList.toggle('expanded')">
+      <div class="log-hdr">
+        <span class="log-name">${l.name} · <span style="color:var(--accent);font-size:11px">${l.tag}</span></span>
+        <span class="log-time">${l.time}</span>
+      </div>
+      <div class="log-preview">${l.msg}</div>
+      <div class="log-full">${l.msg}</div>
+    </div>
+  `).join('');
+}
+
+// ── REVIEWS ──
+function renderReviews() {
+  const t = TR[lang];
+  document.getElementById('reviews-list').innerHTML = reviews.map((r,i) => `
+    <div class="rev-card">
+      <div class="rev-hdr">
+        <div class="rev-av">👤</div>
+        <div>
+          <div class="rev-name">${r.name}</div>
+          <div class="rev-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="rev-date">${r.date}</div>
+          <div class="rev-source">Google Maps</div>
+        </div>
+      </div>
+      <div class="rev-text">${r.text}</div>
+      ${r.answered
+        ? `<div class="rev-reply">🤖 ${r.reply}</div>`
+        : `<button class="rev-gen-btn" id="rev-btn-${i}" onclick="genRevReply(${i})">${t.rev_gen_btn}</button>
+           <div class="rev-reply hidden" id="rev-reply-${i}"></div>`
+      }
+    </div>
+  `).join('');
+}
+
+async function genRevReply(i) {
+  const r = reviews[i];
+  const btn = document.getElementById(`rev-btn-${i}`);
+  btn.innerHTML = `<div class="ldots"><span></span><span></span><span></span></div> ${lang==='ro'?'AI generează...':'AI генерирует...'}`;
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(WORKER, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-opus-4-5', max_tokens:200, system:TR[lang].rev_sys,
+        messages:[{role:'user', content:`Отзыв от ${r.name}: ${r.text}`}]})
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text || '...';
+    btn.classList.add('hidden');
+    const replyEl = document.getElementById(`rev-reply-${i}`);
+    replyEl.classList.remove('hidden');
+    replyEl.textContent = '🤖 ' + reply;
+    revCount = Math.max(0, revCount-1);
+    document.getElementById('rev-counter').textContent = revCount;
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = TR[lang].rev_gen_btn;
+  }
+}
+
+// ── INIT ──
+renderDialogs();
+selectDialog(0);
+renderBookings();
+renderCampaigns();
+renderPt();
+renderReviews();
+</script>
+</body>
+</html>

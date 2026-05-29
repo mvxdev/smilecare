@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoAI — Демо</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f2f5;--white:#fff;--accent:#e85d04;--accent2:#f48c06;
+  --dark:#1a1a2e;--text:#1a1a2e;--muted:#6b7280;--border:#e5e7eb;
+  --green:#10b981;--orange:#f59e0b;--red:#ef4444;--blue:#3b82f6;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--dark);padding:0 24px;height:56px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:#fff}
+.logo span{color:var(--accent)}
+.logo-sub{font-size:12px;color:#6b7280;margin-left:4px;font-weight:400}
+.lang-btns{display:flex;gap:4px;margin-left:auto}
+.lang-btn{padding:4px 10px;border-radius:6px;border:1px solid #374151;background:transparent;cursor:pointer;font-size:12px;color:#9ca3af;font-family:'DM Sans',sans-serif}
+.lang-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* TABS */
+.tabs{display:flex;background:var(--dark);border-bottom:2px solid #2d2d3d;flex-shrink:0}
+.tab{flex:1;padding:12px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;font-family:'DM Sans',sans-serif}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .badge{background:var(--accent);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px}
+
+/* CONTENT */
+.content{flex:1;display:flex;overflow:hidden}
+.panel{display:none;flex:1;flex-direction:column;overflow:hidden}
+.panel.active{display:flex}
+
+/* SIDEBAR */
+.sidebar{width:280px;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-header strong{font-size:13px;font-family:'Syne',sans-serif}
+.sbadge{background:var(--accent);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;margin-left:auto}
+.dialog-list{overflow-y:auto;flex:1}
+.dialog{padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;position:relative}
+.dialog:hover{background:#fafafa}
+.dialog.active{background:#fff5f0;border-left:3px solid var(--accent)}
+.dialog-name{font-size:13px;font-weight:600;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.dialog-car{font-size:11px;color:var(--accent);font-weight:500}
+.dialog-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dialog-time{font-size:11px;color:var(--muted);float:right}
+.unread-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;display:inline-block}
+
+/* CHAT */
+.chat-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.chat-header{padding:12px 20px;border-bottom:1px solid var(--border);background:var(--white);display:flex;align-items:center;gap:10px}
+.chat-header .ch-name{font-weight:600;font-size:14px;font-family:'Syne',sans-serif}
+.chat-header .ch-sub{font-size:12px;color:var(--muted)}
+.online-dot{width:8px;height:8px;background:var(--green);border-radius:50%}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;background:#f8f9fa}
+.msg{display:flex;gap:8px;align-items:flex-end;max-width:75%}
+.msg.bot{align-self:flex-start}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;flex-shrink:0;font-family:'Syne',sans-serif;font-weight:700}
+.avatar.u{background:#e5e7eb;color:var(--text)}
+.bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.5}
+.msg.bot .bubble{background:var(--white);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:3px}
+.typing{display:flex;gap:4px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:14px;width:56px}
+.typing span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:bounce .8s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.quick-btns{padding:8px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap}
+.qbtn{padding:5px 12px;border-radius:16px;border:1px solid var(--accent);color:var(--accent);background:#fff;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif}
+.qbtn:hover{background:#fff5f0}
+.chat-input-bar{padding:12px 16px;background:var(--white);border-top:1px solid var(--border);display:flex;gap:8px}
+.chat-input-bar textarea{flex:1;border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;resize:none;height:40px;font-family:'DM Sans',sans-serif;outline:none}
+.chat-input-bar textarea:focus{border-color:var(--accent)}
+.send-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;width:40px;height:40px;cursor:pointer;font-size:16px}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:20px;flex-shrink:0}
+.stat-card{background:var(--white);border-radius:12px;padding:16px;border:1px solid var(--border)}
+.stat-val{font-size:26px;font-weight:700;color:var(--accent);font-family:'Syne',sans-serif}
+.stat-label{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* STATUS TAB */
+.status-area{flex:1;overflow-y:auto;padding:0 20px 20px}
+.section-title{font-size:14px;font-weight:600;margin-bottom:12px;font-family:'Syne',sans-serif;display:flex;align-items:center;gap:8px}
+.cars-table{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.ct-header{display:grid;grid-template-columns:1fr 100px 130px 140px 120px;padding:10px 16px;background:#f9fafb;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted)}
+.ct-row{display:grid;grid-template-columns:1fr 100px 130px 140px 120px;padding:11px 16px;border-bottom:1px solid var(--border);font-size:13px;align-items:center;cursor:pointer;transition:background .15s}
+.ct-row:last-child{border-bottom:none}
+.ct-row:hover{background:#fafafa}
+.status-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:500}
+.st-diag{background:#fef3c7;color:#92400e}
+.st-work{background:#dbeafe;color:#1e40af}
+.st-done{background:#d1fae5;color:#065f46}
+.st-wait{background:#f3f4f6;color:#374151}
+.notify-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.notify-btn:disabled{background:#e5e7eb;color:#9ca3af;cursor:default}
+.notify-sent{font-size:11px;color:var(--green)}
+
+/* CAR MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:24px;width:480px;max-height:80vh;overflow-y:auto}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted)}
+.modal-field{margin-bottom:12px}
+.modal-label{font-size:12px;color:var(--muted);margin-bottom:4px}
+.modal-select{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none}
+.modal-select:focus{border-color:var(--accent)}
+.modal-textarea{width:100%;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;resize:none;height:80px;outline:none}
+.modal-textarea:focus{border-color:var(--accent)}
+.modal-msg{background:#fff5f0;border:1px solid #fcd5b8;border-radius:8px;padding:12px;font-size:13px;color:var(--text);margin:12px 0;line-height:1.5}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
+.btn-secondary{background:#f3f4f6;color:var(--text);border:none;border-radius:8px;padding:9px 20px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.generating{font-size:12px;color:var(--muted);margin-top:8px}
+.ldots{display:inline-flex;gap:3px}
+.ldots span{width:4px;height:4px;background:var(--muted);border-radius:50%;animation:bounce .8s infinite}
+.ldots span:nth-child(2){animation-delay:.15s}
+.ldots span:nth-child(3){animation-delay:.3s}
+
+/* BROADCAST */
+.broadcast-area{flex:1;overflow-y:auto;padding:0 20px 20px}
+.broadcast-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.send-all-btn{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;cursor:pointer;font-weight:500;font-family:'DM Sans',sans-serif}
+.filter-chips{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:12px;color:var(--muted)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pt-table{background:var(--white);border-radius:12px;border:1px solid var(--border);overflow:hidden}
+.pt-header{display:grid;grid-template-columns:1fr 110px 130px 110px 120px;padding:10px 16px;background:#f9fafb;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--muted)}
+.pt-row{display:grid;grid-template-columns:1fr 110px 130px 110px 120px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px;align-items:center}
+.pt-row:last-child{border-bottom:none}
+.pt-row:hover{background:#fafafa}
+.pt-status{font-size:11px;padding:2px 8px;border-radius:8px}
+.pst-wait{background:#f3f4f6;color:#374151}
+.pst-gen{background:#fef3c7;color:#92400e}
+.pst-sent{background:#d1fae5;color:#065f46}
+.pt-send-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.pt-send-btn:disabled{background:#e5e7eb;color:#9ca3af;cursor:default}
+.log-section{margin-top:20px}
+.log-item{background:var(--white);border-radius:8px;border:1px solid var(--border);padding:12px 16px;margin-bottom:8px;cursor:pointer}
+.log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.log-name{font-size:13px;font-weight:600}
+.log-time{font-size:11px;color:var(--muted)}
+.log-preview{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-full{font-size:13px;color:var(--text);margin-top:8px;line-height:1.5;display:none}
+.log-item.expanded .log-full{display:block}
+.show-more-btn{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px;width:100%;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);margin-top:8px}
+.progress-bar{background:#f3f4f6;border-radius:4px;height:6px;overflow:hidden;margin-top:12px}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+
+/* REVIEWS */
+.reviews-area{flex:1;overflow-y:auto;padding:0 20px 20px}
+.rev-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.rev-header{display:flex;gap:10px;margin-bottom:8px;align-items:center}
+.rev-avatar{width:36px;height:36px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:14px}
+.rev-name{font-size:13px;font-weight:600}
+.rev-stars{color:#f59e0b;font-size:13px}
+.rev-date{font-size:11px;color:var(--muted);margin-left:auto}
+.rev-source{font-size:11px;color:var(--muted)}
+.rev-text{font-size:13px;color:#374151;line-height:1.5;margin-bottom:10px}
+.rev-gen-btn{background:#fff5f0;border:1px solid #fcd5b8;border-radius:8px;padding:9px 14px;font-size:12px;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:8px;width:100%}
+.rev-reply{background:#f0fdf4;border-radius:8px;padding:10px 14px;font-size:13px;color:#065f46;line-height:1.5;border:1px solid #bbf7d0}
+.hidden{display:none!important}
+
+/* ANALYTICS */
+.analytics-area{flex:1;overflow-y:auto;padding:20px}
+.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
+.chart-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:16px}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:12px;font-family:'Syne',sans-serif}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px}
+.bar{flex:1;background:var(--accent);border-radius:3px 3px 0 0;opacity:.8;transition:opacity .2s;min-width:8px}
+.bar:hover{opacity:1}
+.bar-labels{display:flex;gap:4px;margin-top:4px}
+.bar-label{flex:1;text-align:center;font-size:10px;color:var(--muted)}
+.funnel{display:flex;flex-direction:column;gap:6px}
+.funnel-row{display:flex;align-items:center;gap:10px}
+.funnel-bar-wrap{flex:1;background:#f3f4f6;border-radius:4px;height:20px;overflow:hidden}
+.funnel-bar{height:100%;background:var(--accent);border-radius:4px;display:flex;align-items:center;padding-left:8px}
+.funnel-label{font-size:11px;color:#fff;white-space:nowrap}
+.funnel-count{font-size:12px;color:var(--muted);width:40px;text-align:right}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Auto<span>AI</span> <span class="logo-sub">Автосервис</span></div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('ru',this)">RU</button>
+    <button class="lang-btn" onclick="setLang('ro',this)">RO</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('chat',this)">💬 <span id="t-chat">Чат</span> <span class="badge" id="chat-badge">5</span></div>
+  <div class="tab" onclick="switchTab('status',this)">🔧 <span id="t-status">Статус ремонта</span></div>
+  <div class="tab" onclick="switchTab('broadcast',this)">📤 <span id="t-broadcast">Рассылки</span></div>
+  <div class="tab" onclick="switchTab('reviews',this)">⭐ <span id="t-reviews">Репутация</span></div>
+</div>
+
+<div class="content">
+
+<!-- CHAT -->
+<div class="panel active" id="panel-chat" style="flex-direction:row">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <strong id="lbl-dialogs">Диалоги</strong>
+      <span class="sbadge" id="dialogs-badge">5</span>
+    </div>
+    <div class="dialog-list" id="dialog-list"></div>
+  </div>
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="online-dot"></div>
+      <div>
+        <div class="ch-name" id="active-name">Попеску Андрей</div>
+        <div class="ch-sub" id="active-sub">WhatsApp · Онлайн · Toyota Camry</div>
+      </div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="quick-btns" id="quick-btns"></div>
+    <div class="chat-input-bar">
+      <textarea id="user-input" placeholder="Написать..."></textarea>
+      <button class="send-btn" onclick="sendMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS -->
+<div class="panel" id="panel-status">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="stat-in-work">8</div><div class="stat-label" id="lbl-in-work">Авто в работе</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)" id="stat-done-today">5</div><div class="stat-label" id="lbl-done-today">Выдано сегодня</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--orange)" id="stat-waiting">3</div><div class="stat-label" id="lbl-waiting">Ожидают запчасти</div></div>
+  </div>
+  <div class="status-area">
+    <div class="section-title" id="lbl-cars-table">🔧 Автомобили в работе</div>
+    <div class="cars-table">
+      <div class="ct-header">
+        <div id="ct-car">Автомобиль / Клиент</div>
+        <div id="ct-mileage">Пробег</div>
+        <div id="ct-work">Работа</div>
+        <div id="ct-status-h">Статус</div>
+        <div id="ct-notify-h">Уведомление</div>
+      </div>
+      <div id="cars-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BROADCAST -->
+<div class="panel" id="panel-broadcast">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">847</div><div class="stat-label" id="lbl-base">База клиентов</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--orange)">312</div><div class="stat-label" id="lbl-no-visit-b">Без визита 6+ мес</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">43 200 <span style="font-size:14px">лей</span></div><div class="stat-label" id="lbl-extra-rev-b">Доп. выручка от рассылок</div></div>
+  </div>
+  <div class="broadcast-area">
+    <div class="filter-chips" id="filter-chips"></div>
+    <div class="broadcast-header">
+      <div class="section-title" id="lbl-queue-b">В очереди (12)</div>
+      <button class="send-all-btn" id="btn-send-all" onclick="sendAll()">▶ <span id="btn-send-all-text">Запустить всех</span></button>
+    </div>
+    <div class="pt-table">
+      <div class="pt-header">
+        <div id="pt-name">Клиент</div>
+        <div id="pt-car-h">Авто</div>
+        <div id="pt-last-visit">Последний визит</div>
+        <div id="pt-reason">Повод</div>
+        <div id="pt-status-h">Статус</div>
+      </div>
+      <div id="patient-rows"></div>
+    </div>
+    <div class="log-section">
+      <div class="section-title" id="lbl-sent-log">Отправленные</div>
+      <div id="log-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEWS -->
+<div class="panel" id="panel-reviews">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-val">324</div><div class="stat-label" id="lbl-total-rev">Всего отзывов</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">4.8 ★</div><div class="stat-label" id="lbl-rating">Средний рейтинг</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--orange)" id="rev-counter">4</div><div class="stat-label" id="lbl-await-reply">Ждут ответа</div></div>
+  </div>
+  <div class="reviews-area" id="reviews-list"></div>
+</div>
+
+</div><!-- /content -->
+
+<!-- CAR MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modal-title-text">Уведомить клиента</span>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label" id="modal-status-label">Новый статус</div>
+      <select class="modal-select" id="modal-status-select">
+        <option value="diag">Диагностика</option>
+        <option value="work">В работе</option>
+        <option value="parts">Ожидание запчастей</option>
+        <option value="done">Готов к выдаче</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label" id="modal-comment-label">Комментарий мастера (необязательно)</div>
+      <textarea class="modal-textarea" id="modal-comment" placeholder="Например: заменили тормозные колодки, масло, фильтр..."></textarea>
+    </div>
+    <div id="modal-generating" class="generating hidden"><div class="ldots"><span></span><span></span><span></span></div> AI генерирует сообщение...</div>
+    <div class="modal-msg hidden" id="modal-msg-box"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="modal-gen-btn" onclick="generateNotification()">Сгенерировать</button>
+      <button class="btn-primary hidden" id="modal-send-btn" onclick="sendNotification()">Отправить</button>
+      <button class="btn-secondary" onclick="closeModalDirect()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WORKER = 'https://smilecare-proxy.badmvx7.workers.dev';
+let lang = 'ru';
+let activeDialog = 0;
+const convHistory = {};
+const notifStatus = {};
+let currentCarIdx = null;
+let currentModalMsg = '';
+
+const TR = {
+  ru: {
+    't-chat':'Чат','t-status':'Статус ремонта','t-broadcast':'Рассылки','t-reviews':'Репутация',
+    'lbl-dialogs':'Диалоги',
+    'lbl-in-work':'Авто в работе','lbl-done-today':'Выдано сегодня','lbl-waiting':'Ожидают запчасти',
+    'lbl-cars-table':'🔧 Автомобили в работе',
+    'ct-car':'Автомобиль / Клиент','ct-mileage':'Пробег','ct-work':'Работа','ct-status-h':'Статус','ct-notify-h':'Уведомление',
+    'lbl-base':'База клиентов','lbl-no-visit-b':'Без визита 6+ мес','lbl-extra-rev-b':'Доп. выручка от рассылок',
+    'lbl-queue-b':'В очереди (12)','btn-send-all-text':'Запустить всех',
+    'pt-name':'Клиент','pt-car-h':'Авто','pt-last-visit':'Последний визит','pt-reason':'Повод','pt-status-h':'Статус',
+    'lbl-sent-log':'Отправленные',
+    'lbl-total-rev':'Всего отзывов','lbl-rating':'Средний рейтинг','lbl-await-reply':'Ждут ответа',
+    'active-sub-suffix':'WhatsApp · Онлайн',
+    placeholder:'Написать...',
+    chips:['Все','Замена масла','Резина','ТО','Тормоза'],
+    statuses:{diag:'Диагностика',work:'В работе',parts:'Ждёт запчасти',done:'Готов'},
+    stClasses:{diag:'st-diag',work:'st-work',parts:'st-wait',done:'st-done'},
+    ptStatuses:{wait:'Ожидание',gen:'AI готовит...',sent:'Отправлено'},
+    revGenBtn:'✦ AI готовит ответ — нажмите для генерации',
+    'modal-status-label':'Новый статус','modal-comment-label':'Комментарий мастера (необязательно)',
+    statusOptions:['Диагностика','В работе','Ожидание запчастей','Готов к выдаче'],
+    greet:'Здравствуйте! 👋\n\nЯ AI-ассистент автосервиса AutoAI. Помогу записать на обслуживание, отвечу на вопросы о ценах и статусе вашего автомобиля.\n\nЧем могу помочь?',
+    sysPrompt:`Ты AI-ассистент автосервиса AutoAI (Кишинёв, Молдова). Общаешься с клиентами в WhatsApp.
+Правила:
+- Отвечай коротко, тепло, профессионально (1-4 предложения)
+- Сервис работает Пн-Сб 8:00-19:00
+- Цены: замена масла от 200 лей, ТО от 800 лей, замена тормозных колодок от 500 лей, сход-развал 300 лей
+- Если спрашивают о статусе авто — запроси госномер и уточни
+- Предлагай конкретные времена записи (завтра 9:00, 11:00 и т.д.)
+- Язык: строго русский`,
+    quickReplies:['Записаться','Цены','Статус авто','Срочно']
+  },
+  ro: {
+    't-chat':'Chat','t-status':'Status reparație','t-broadcast':'Notificări','t-reviews':'Reputație',
+    'lbl-dialogs':'Dialoguri',
+    'lbl-in-work':'Mașini în lucru','lbl-done-today':'Eliberate azi','lbl-waiting':'Așteaptă piese',
+    'lbl-cars-table':'🔧 Mașini în lucru',
+    'ct-car':'Mașină / Client','ct-mileage':'Km','ct-work':'Lucrare','ct-status-h':'Status','ct-notify-h':'Notificare',
+    'lbl-base':'Baza de clienți','lbl-no-visit-b':'Fără vizită 6+ luni','lbl-extra-rev-b':'Venit suplimentar',
+    'lbl-queue-b':'În coadă (12)','btn-send-all-text':'Lansează tuturor',
+    'pt-name':'Client','pt-car-h':'Mașină','pt-last-visit':'Ultima vizită','pt-reason':'Motiv','pt-status-h':'Status',
+    'lbl-sent-log':'Trimise',
+    'lbl-total-rev':'Total recenzii','lbl-rating':'Rating mediu','lbl-await-reply':'Așteaptă răspuns',
+    'active-sub-suffix':'WhatsApp · Online',
+    placeholder:'Scrie...',
+    chips:['Toate','Schimb ulei','Anvelope','ITP','Frâne'],
+    statuses:{diag:'Diagnosticare',work:'În lucru',parts:'Așteaptă piese',done:'Gata'},
+    stClasses:{diag:'st-diag',work:'st-work',parts:'st-wait',done:'st-done'},
+    ptStatuses:{wait:'Așteptare',gen:'AI generează...',sent:'Trimis'},
+    revGenBtn:'✦ AI pregătește răspuns — apasă pentru generare',
+    'modal-status-label':'Status nou','modal-comment-label':'Comentariu mecanic (opțional)',
+    statusOptions:['Diagnosticare','În lucru','Așteaptă piese','Gata de eliberat'],
+    greet:'Bună ziua! 👋\n\nSunt asistentul AI al service-ului AutoAI. Vă pot ajuta să programați o vizită, să răspund la întrebări despre prețuri și statusul mașinii dvs.\n\nCu ce vă pot ajuta?',
+    sysPrompt:`Ești asistentul AI al service-ului auto AutoAI (Chișinău, Moldova). Comunici cu clienții pe WhatsApp.
+Reguli:
+- Răspunde scurt, cald, profesionist (1-4 propoziții)
+- Service-ul lucrează Luni-Sâmbătă 8:00-19:00
+- Prețuri: schimb ulei de la 200 lei, ITP de la 800 lei, schimb plăcuțe frână de la 500 lei, geometrie 300 lei
+- Dacă întreabă de statusul mașinii — solicită numărul de înmatriculare
+- Propune ore concrete pentru programare (mâine 9:00, 11:00 etc.)
+- Limba: strict română`,
+    quickReplies:['Programare','Prețuri','Status mașină','Urgent']
+  }
+};
+
+// DIALOGS DATA
+const dialogsData = {
+  ru: [
+    {id:'popescu',name:'Попеску Андрей',car:'Toyota Camry',preview:'Когда будет готова машина?',time:'09:22',unread:true},
+    {id:'lungu',name:'Лунгу Виктор',car:'BMW 5 Series',preview:'Сколько стоит замена масла?',time:'09:10',unread:true},
+    {id:'ciobanu',name:'Чобану Наталья',car:'VW Passat',preview:'Запишите на диагностику',time:'08:55',unread:true},
+    {id:'rusu',name:'Руссу Константин',car:'Dacia Logan',preview:'Шум при торможении',time:'08:40',unread:true},
+    {id:'munteanu',name:'Мунтяну Дмитрий',car:'Ford Focus',preview:'Спасибо, всё отлично!',time:'08:25',unread:true},
+    {id:'bodnar',name:'Боднарь Ирина',car:'Renault Duster',preview:'Мигает чек-двигатель',time:'08:10'},
+    {id:'popa',name:'Попа Сергей',car:'Skoda Octavia',preview:'Подтверждаю запись на пятницу',time:'07:55'},
+    {id:'grosu',name:'Гросу Марина',car:'Hyundai Tucson',preview:'Когда можно приехать?',time:'07:30'},
+    {id:'rotaru',name:'Ротарь Алексей',car:'Mercedes C-Class',preview:'Замена колодок срочно',time:'07:10'},
+    {id:'cojocaru',name:'Кожокару Елена',car:'Kia Sportage',preview:'Хорошо, жду звонка',time:'06:50'},
+    {id:'apostol',name:'Апостол Михаил',car:'Peugeot 308',preview:'Сход-развал и балансировка',time:'06:30'},
+    {id:'balan',name:'Балан Татьяна',car:'Opel Astra',preview:'Спасибо за быстрый ответ!',time:'06:10'},
+  ],
+  ro: [
+    {id:'ionescu',name:'Ionescu Andrei',car:'Toyota Camry',preview:'Când e gata mașina?',time:'09:22',unread:true},
+    {id:'lupu',name:'Lupu Victor',car:'BMW 5 Series',preview:'Cât costă schimbul de ulei?',time:'09:10',unread:true},
+    {id:'ciobanu2',name:'Ciobanu Natalia',car:'VW Passat',preview:'Programați-mă la diagnosticare',time:'08:55',unread:true},
+    {id:'rusu2',name:'Rusu Constantin',car:'Dacia Logan',preview:'Zgomot la frânare',time:'08:40',unread:true},
+    {id:'munteanu2',name:'Munteanu Dmitri',car:'Ford Focus',preview:'Mulțumesc, totul perfect!',time:'08:25',unread:true},
+    {id:'bodnar2',name:'Bodnar Irina',car:'Renault Duster',preview:'Luminița de motor clipește',time:'08:10'},
+    {id:'popa2',name:'Popa Sergiu',car:'Skoda Octavia',preview:'Confirm programarea de vineri',time:'07:55'},
+    {id:'grosu2',name:'Grosu Marina',car:'Hyundai Tucson',preview:'Când pot veni?',time:'07:30'},
+    {id:'rotaru2',name:'Rotaru Alexei',car:'Mercedes C-Class',preview:'Schimb plăcuțe urgent',time:'07:10'},
+    {id:'cojocaru2',name:'Cojocaru Elena',car:'Kia Sportage',preview:'Bine, aștept apelul',time:'06:50'},
+    {id:'apostol2',name:'Apostol Mihail',car:'Peugeot 308',preview:'Geometrie și echilibrare',time:'06:30'},
+    {id:'balanr',name:'Balan Tatiana',car:'Opel Astra',preview:'Mulțumesc pentru răspuns rapid!',time:'06:10'},
+  ]
+};
+
+// CARS DATA
+const carsData = {
+  ru: [
+    {name:'Попеску А.',plate:'MDK 234',car:'Toyota Camry 2019',mileage:'87 400',work:'Замена масла + фильтров',status:'done',phone:'+373 69 123 456'},
+    {name:'Лунгу В.',plate:'AAB 567',car:'BMW 520d 2021',mileage:'45 200',work:'Диагностика подвески',status:'diag',phone:'+373 79 234 567'},
+    {name:'Чобану Н.',plate:'CDE 891',car:'VW Passat B8 2018',mileage:'112 000',work:'Замена тормозных колодок',status:'work',phone:'+373 69 345 678'},
+    {name:'Руссу К.',plate:'FGH 012',car:'Dacia Logan 2020',mileage:'63 800',work:'Сход-развал, балансировка',status:'parts',phone:'+373 79 456 789'},
+    {name:'Мунтяну Д.',plate:'IJK 345',car:'Ford Focus 2017',mileage:'98 500',work:'ТО плановое',status:'done',phone:'+373 69 567 890'},
+    {name:'Боднарь И.',plate:'LMN 678',car:'Renault Duster 2022',mileage:'34 100',work:'Диагностика двигателя',status:'diag',phone:'+373 79 678 901'},
+    {name:'Попа С.',plate:'OPQ 901',car:'Skoda Octavia 2020',mileage:'71 300',work:'Замена свечей зажигания',status:'work',phone:'+373 69 789 012'},
+    {name:'Гросу М.',plate:'RST 234',car:'Hyundai Tucson 2021',mileage:'42 700',work:'Замена антифриза',status:'parts',phone:'+373 79 890 123'},
+  ],
+  ro: [
+    {name:'Ionescu A.',plate:'MDK 234',car:'Toyota Camry 2019',mileage:'87 400',work:'Schimb ulei + filtre',status:'done',phone:'+373 69 123 456'},
+    {name:'Lupu V.',plate:'AAB 567',car:'BMW 520d 2021',mileage:'45 200',work:'Diagnosticare suspensie',status:'diag',phone:'+373 79 234 567'},
+    {name:'Ciobanu N.',plate:'CDE 891',car:'VW Passat B8 2018',mileage:'112 000',work:'Schimb plăcuțe frână',status:'work',phone:'+373 69 345 678'},
+    {name:'Rusu C.',plate:'FGH 012',car:'Dacia Logan 2020',mileage:'63 800',work:'Geometrie, echilibrare',status:'parts',phone:'+373 79 456 789'},
+    {name:'Munteanu D.',plate:'IJK 345',car:'Ford Focus 2017',mileage:'98 500',work:'ITP planificat',status:'done',phone:'+373 69 567 890'},
+    {name:'Bodnar I.',plate:'LMN 678',car:'Renault Duster 2022',mileage:'34 100',work:'Diagnosticare motor',status:'diag',phone:'+373 79 678 901'},
+    {name:'Popa S.',plate:'OPQ 901',car:'Skoda Octavia 2020',mileage:'71 300',work:'Schimb bujii',status:'work',phone:'+373 69 789 012'},
+    {name:'Grosu M.',plate:'RST 234',car:'Hyundai Tucson 2021',mileage:'42 700',work:'Schimb antigel',status:'parts',phone:'+373 79 890 123'},
+  ]
+};
+
+// PATIENTS DATA
+const patientsData = {
+  ru: [
+    {name:'Апостол Михаил',car:'Peugeot 308',last:'15 нояб 2024',reason:'Замена резины'},
+    {name:'Балан Татьяна',car:'Opel Astra',last:'28 окт 2024',reason:'Плановое ТО'},
+    {name:'Кожокару Елена',car:'Kia Sportage',last:'10 окт 2024',reason:'Замена масла'},
+    {name:'Ротарь Алексей',car:'Mercedes C',last:'3 окт 2024',reason:'Тормоза'},
+    {name:'Дану Виктор',car:'Honda CR-V',last:'25 сент 2024',reason:'Диагностика'},
+    {name:'Негру Анна',car:'Mazda 6',last:'18 сент 2024',reason:'Зимняя резина'},
+    {name:'Влад Сергей',car:'Audi A4',last:'5 сент 2024',reason:'Плановое ТО'},
+    {name:'Тодераш Марина',car:'Toyota RAV4',last:'28 авг 2024',reason:'Замена масла'},
+    {name:'Брага Николай',car:'Nissan X-Trail',last:'20 авг 2024',reason:'Подвеска'},
+    {name:'Спыну Ольга',car:'Renault Logan',last:'12 авг 2024',reason:'ТО'},
+    {name:'Мокану Виктор',car:'VW Golf',last:'5 авг 2024',reason:'Сезонная шиновка'},
+    {name:'Чобану Анатолий',car:'Ford Mondeo',last:'28 июл 2024',reason:'Тормозные колодки'},
+  ],
+  ro: [
+    {name:'Apostol Mihail',car:'Peugeot 308',last:'15 nov 2024',reason:'Schimb anvelope'},
+    {name:'Balan Tatiana',car:'Opel Astra',last:'28 oct 2024',reason:'ITP planificat'},
+    {name:'Cojocaru Elena',car:'Kia Sportage',last:'10 oct 2024',reason:'Schimb ulei'},
+    {name:'Rotaru Alexei',car:'Mercedes C',last:'3 oct 2024',reason:'Frâne'},
+    {name:'Danu Victor',car:'Honda CR-V',last:'25 sept 2024',reason:'Diagnosticare'},
+    {name:'Negru Ana',car:'Mazda 6',last:'18 sept 2024',reason:'Anvelope iarnă'},
+    {name:'Vlad Sergiu',car:'Audi A4',last:'5 sept 2024',reason:'ITP planificat'},
+    {name:'Todiras Marina',car:'Toyota RAV4',last:'28 aug 2024',reason:'Schimb ulei'},
+    {name:'Braga Nicolae',car:'Nissan X-Trail',last:'20 aug 2024',reason:'Suspensie'},
+    {name:'Spinu Olga',car:'Renault Logan',last:'12 aug 2024',reason:'ITP'},
+    {name:'Mocanu Victor',car:'VW Golf',last:'5 aug 2024',reason:'Anvelope sezon'},
+    {name:'Ciobanu Anatol',car:'Ford Mondeo',last:'28 iul 2024',reason:'Plăcuțe frână'},
+  ]
+};
+
+const ptStatusState = {};
+const logItems = [];
+
+// REVIEWS
+const reviews = [
+  {name:'Татьяна Ф.',stars:5,date:'сегодня / azi',text:'Отличный сервис! Заменили масло быстро и качественно. Мастер объяснил всё подробно. Буду обращаться ещё.',answered:true,reply:'Татьяна, спасибо за тёплые слова! Рады, что всё прошло быстро и чисто. Ждём вас снова — следующее ТО через 10 000 км 🚗'},
+  {name:'Михаил Д.',stars:5,date:'вчера / ieri',text:'Приехал с шумом в подвеске — нашли и устранили проблему за 2 часа. Честная диагностика, никаких лишних работ.',answered:false},
+  {name:'Maria C.',stars:4,date:'2 zile / 2 дня',text:'Service rapid și profesionist. Au schimbat plăcuțele de frână și au verificat discurile. Recomand!',answered:false},
+  {name:'Alexandru R.',stars:5,date:'3 zile / 3 дня',text:'Cel mai bun service din Chișinău! Prețuri corecte, mecanici profesioniști. Am venit cu ITP și au rezolvat tot.',answered:true,reply:'Alexandru, mulțumim mult pentru apreciere! Ne bucurăm că ați fost mulțumit. Pe curând!'},
+  {name:'Анастасия В.',stars:5,date:'4 дня / 4 zile',text:'Записалась онлайн через бот — очень удобно! Приехала, всё было готово. Замена масла + фильтры за 40 минут.',answered:false},
+];
+let revCount = 3; // неотвеченных
+
+// ── LANGUAGE ──
+function setLang(l, btn) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const t = TR[l];
+  ['t-chat','t-status','t-broadcast','t-reviews','lbl-dialogs',
+   'lbl-in-work','lbl-done-today','lbl-waiting','lbl-cars-table',
+   'ct-car','ct-mileage','ct-work','ct-status-h','ct-notify-h',
+   'lbl-base','lbl-no-visit-b','lbl-extra-rev-b','lbl-queue-b','btn-send-all-text',
+   'pt-name','pt-car-h','pt-last-visit','pt-reason','pt-status-h','lbl-sent-log',
+   'lbl-total-rev','lbl-rating','lbl-await-reply'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.textContent = t[id] || el.textContent;
+  });
+  document.getElementById('user-input').placeholder = t.placeholder;
+  renderDialogs();
+  renderCars();
+  renderPatients();
+  renderReviews();
+  renderChips();
+}
+
+// ── TABS ──
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+// ── DIALOGS ──
+let unreadCount = 5;
+function renderDialogs() {
+  const list = dialogsData[lang];
+  const el = document.getElementById('dialog-list');
+  el.innerHTML = list.map((d,i)=>`
+    <div class="dialog${i===activeDialog?' active':''}" onclick="selectDialog(${i})" id="dlg-${i}">
+      <span class="dialog-time">${d.time}</span>
+      ${d.unread?`<span class="unread-dot" id="dot-${i}"></span>`:''}
+      <div class="dialog-name">${d.name}</div>
+      <div class="dialog-car">${d.car}</div>
+      <div class="dialog-preview">${d.preview}</div>
+    </div>
+  `).join('');
+}
+
+function selectDialog(i) {
+  const list = dialogsData[lang];
+  if(list[i].unread && i !== 0) {
+    list[i].unread = false;
+    unreadCount = Math.max(0, unreadCount-1);
+    document.getElementById('chat-badge').textContent = unreadCount||'';
+    document.getElementById('dialogs-badge').textContent = unreadCount||'';
+  }
+  activeDialog = i;
+  renderDialogs();
+  const d = list[i];
+  document.getElementById('active-name').textContent = d.name;
+  document.getElementById('active-sub').textContent = `${TR[lang]['active-sub-suffix']} · ${d.car}`;
+  if(!convHistory[i]) {
+    convHistory[i] = [{role:'bot',text:TR[lang].greet}];
+    if(d.preview && i>0) convHistory[i].push({role:'user',text:d.preview});
+  }
+  renderChat(i);
+  renderQuickBtns();
+}
+
+function renderChat(i) {
+  const msgs = convHistory[i]||[];
+  const el = document.getElementById('chat-msgs');
+  el.innerHTML = msgs.map(m=>`
+    <div class="msg ${m.role}">
+      ${m.role==='bot'?'<div class="avatar">AI</div>':'<div class="avatar u">👤</div>'}
+      <div><div class="bubble">${m.text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div></div>
+    </div>
+  `).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function renderQuickBtns() {
+  const el = document.getElementById('quick-btns');
+  el.innerHTML = TR[lang].quickReplies.map(q=>`
+    <button class="qbtn" onclick="sendQuick('${q}')">${q}</button>
+  `).join('');
+}
+
+async function sendQuick(text) { await doSend(text); }
+async function sendMsg() {
+  const inp = document.getElementById('user-input');
+  const text = inp.value.trim();
+  if(!text) return;
+  inp.value = '';
+  await doSend(text);
+}
+document.getElementById('user-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
+});
+
+async function doSend(text) {
+  if(!convHistory[activeDialog]) convHistory[activeDialog]=[];
+  convHistory[activeDialog].push({role:'user',text});
+  renderChat(activeDialog);
+  const el = document.getElementById('chat-msgs');
+  const typing = document.createElement('div');
+  typing.className='msg bot';
+  typing.innerHTML='<div class="avatar">AI</div><div class="typing"><span></span><span></span><span></span></div>';
+  el.appendChild(typing);
+  el.scrollTop=el.scrollHeight;
+
+  const apiMsgs = convHistory[activeDialog]
+    .map(m=>({role:m.role==='bot'?'assistant':'user',content:m.text}));
+  if(apiMsgs[0]?.role==='assistant') apiMsgs.shift();
+
+  try {
+    const resp = await fetch(WORKER,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:350,system:TR[lang].sysPrompt,messages:apiMsgs})
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text||'...';
+    typing.remove();
+    convHistory[activeDialog].push({role:'bot',text:reply});
+    renderChat(activeDialog);
+  } catch(e) {
+    typing.remove();
+    convHistory[activeDialog].push({role:'bot',text:'Ошибка соединения.'});
+    renderChat(activeDialog);
+  }
+}
+
+// ── CARS ──
+function renderCars() {
+  const list = carsData[lang];
+  const t = TR[lang];
+  const el = document.getElementById('cars-rows');
+  el.innerHTML = list.map((c,i)=>{
+    const st = notifStatus[i];
+    const stLabel = t.statuses[c.status];
+    const stClass = t.stClasses[c.status];
+    let notifCell = '';
+    if(st==='sent') notifCell = `<span class="notify-sent">✓ Отправлено</span>`;
+    else notifCell = `<button class="notify-btn" onclick="openModal(${i})">${lang==='ro'?'Notifică':'Уведомить'}</button>`;
+    return `<div class="ct-row">
+      <div><b>${c.car}</b><br><span style="font-size:12px;color:var(--muted)">${c.name} · ${c.plate}</span></div>
+      <div style="font-size:12px">${c.mileage} км</div>
+      <div style="font-size:12px">${c.work}</div>
+      <div><span class="status-badge ${stClass}">${stLabel}</span></div>
+      <div>${notifCell}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ──
+function openModal(idx) {
+  currentCarIdx = idx;
+  currentModalMsg = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-msg-box').classList.add('hidden');
+  document.getElementById('modal-msg-box').textContent = '';
+  document.getElementById('modal-generating').classList.add('hidden');
+  document.getElementById('modal-gen-btn').classList.remove('hidden');
+  document.getElementById('modal-send-btn').classList.add('hidden');
+  document.getElementById('modal-comment').value = '';
+  document.getElementById('modal-status-label').textContent = TR[lang]['modal-status-label'];
+  document.getElementById('modal-comment-label').textContent = TR[lang]['modal-comment-label'];
+  const sel = document.getElementById('modal-status-select');
+  sel.innerHTML = TR[lang].statusOptions.map((o,i)=>`<option value="${['diag','work','parts','done'][i]}">${o}</option>`).join('');
+  const car = carsData[lang][idx];
+  sel.value = car.status;
+  document.getElementById('modal-title-text').textContent = `${car.name} — ${car.car}`;
+}
+
+function closeModal(e) { if(e.target.id==='modal-overlay') closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+async function generateNotification() {
+  const car = carsData[lang][currentCarIdx];
+  const status = document.getElementById('modal-status-select').value;
+  const comment = document.getElementById('modal-comment').value;
+  const statusLabel = TR[lang].statuses[status];
+
+  document.getElementById('modal-gen-btn').classList.add('hidden');
+  document.getElementById('modal-generating').classList.remove('hidden');
+
+  const sysP = lang==='ro'
+    ? `Ești administratorul service-ului auto AutoAI. Scrie un mesaj WhatsApp scurt și profesionist pentru client despre statusul mașinii. Max 3 propoziții. Fără asteriscuri.`
+    : `Ты администратор автосервиса AutoAI. Напиши короткое профессиональное WhatsApp-сообщение клиенту о статусе его автомобиля. Максимум 3 предложения. Без звёздочек.`;
+  const userMsg = lang==='ro'
+    ? `Mașina: ${car.car} (${car.plate}). Status nou: ${statusLabel}. ${comment?'Comentariu: '+comment:''}`
+    : `Автомобиль: ${car.car} (${car.plate}). Новый статус: ${statusLabel}. ${comment?'Комментарий: '+comment:''}`;
+
+  try {
+    const resp = await fetch(WORKER,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:200,system:sysP,messages:[{role:'user',content:userMsg}]})
+    });
+    const data = await resp.json();
+    currentModalMsg = data.content?.[0]?.text||'...';
+    document.getElementById('modal-generating').classList.add('hidden');
+    const box = document.getElementById('modal-msg-box');
+    box.textContent = currentModalMsg;
+    box.classList.remove('hidden');
+    document.getElementById('modal-send-btn').classList.remove('hidden');
+    carsData[lang][currentCarIdx].status = status;
+    renderCars();
+  } catch(e) {
+    document.getElementById('modal-generating').classList.add('hidden');
+    document.getElementById('modal-gen-btn').classList.remove('hidden');
+  }
+}
+
+function sendNotification() {
+  notifStatus[currentCarIdx] = 'sent';
+  const car = carsData[lang][currentCarIdx];
+  logItems.unshift({name:car.name, car:car.car, msg:currentModalMsg, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+  renderCars();
+  closeModalDirect();
+}
+
+// ── CHIPS ──
+let activeChip = 0;
+function renderChips() {
+  const chips = TR[lang].chips;
+  document.getElementById('filter-chips').innerHTML = chips.map((c,i)=>`
+    <div class="chip${i===activeChip?' active':''}" onclick="setChip(${i})">${c}</div>
+  `).join('');
+}
+function setChip(i) {
+  activeChip = i;
+  renderChips();
+  renderPatients();
+}
+
+// ── PATIENTS ──
+const ptStates = {};
+const SHOW_PT = 10;
+let showAllPt = false;
+function renderPatients() {
+  const list = patientsData[lang];
+  const t = TR[lang];
+  const el = document.getElementById('patient-rows');
+  const shown = showAllPt ? list : list.slice(0,SHOW_PT);
+  el.innerHTML = shown.map((p,i)=>{
+    const st = ptStates[i]||'wait';
+    let stHtml = '';
+    if(st==='sent') stHtml=`<span class="pt-status pst-sent">${t.ptStatuses.sent}</span>`;
+    else if(st==='gen') stHtml=`<span class="pt-status pst-gen">${t.ptStatuses.gen}</span>`;
+    else stHtml=`<span class="pt-status pst-wait">${t.ptStatuses.wait}</span>`;
+    const btnDisabled = st!=='wait'?'disabled':'';
+    return `<div class="pt-row">
+      <div>${p.name}</div>
+      <div style="font-size:12px">${p.car}</div>
+      <div style="font-size:12px">${p.last}</div>
+      <div style="font-size:12px">${p.reason}</div>
+      <div>${stHtml}</div>
+    </div>`;
+  }).join('');
+  renderLog();
+}
+
+async function sendAll() {
+  const list = patientsData[lang];
+  const btn = document.getElementById('btn-send-all');
+  btn.disabled = true;
+  const bar = document.createElement('div');
+  bar.className = 'progress-bar';
+  bar.innerHTML = '<div class="progress-fill" id="prog-fill" style="width:0%"></div>';
+  document.querySelector('.broadcast-header').after(bar);
+
+  for(let i=0;i<list.length;i++) {
+    ptStates[i]='gen';
+    renderPatients();
+    await new Promise(r=>setTimeout(r,200+Math.random()*300));
+    ptStates[i]='sent';
+    logItems.unshift({name:list[i].name, car:list[i].car, msg:`Автоматическое напоминание: ${list[i].reason}`, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+    renderPatients();
+    document.getElementById('prog-fill').style.width = ((i+1)/list.length*100)+'%';
+  }
+  btn.textContent = lang==='ro'?'✓ Trimis tuturor':'✓ Отправлено всем';
+  setTimeout(()=>bar.remove(), 2000);
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  const shown = logItems.slice(0,5);
+  el.innerHTML = shown.map((l,i)=>`
+    <div class="log-item" onclick="this.classList.toggle('expanded')">
+      <div class="log-header">
+        <span class="log-name">${l.name} · ${l.car}</span>
+        <span class="log-time">${l.time}</span>
+      </div>
+      <div class="log-preview">${l.msg}</div>
+      <div class="log-full">${l.msg}</div>
+    </div>
+  `).join('');
+  if(logItems.length>5) {
+    el.innerHTML += `<button class="show-more-btn" onclick="showMoreLog()">${lang==='ro'?`Arată tot (${logItems.length})`:`Показать все (${logItems.length})`} ▼</button>`;
+  }
+}
+function showMoreLog() {
+  const el = document.getElementById('log-list');
+  el.innerHTML = logItems.map(l=>`
+    <div class="log-item" onclick="this.classList.toggle('expanded')">
+      <div class="log-header">
+        <span class="log-name">${l.name} · ${l.car}</span>
+        <span class="log-time">${l.time}</span>
+      </div>
+      <div class="log-preview">${l.msg}</div>
+      <div class="log-full">${l.msg}</div>
+    </div>
+  `).join('');
+}
+
+// ── REVIEWS ──
+function renderReviews() {
+  const el = document.getElementById('reviews-list');
+  el.innerHTML = reviews.map((r,i)=>`
+    <div class="rev-card">
+      <div class="rev-header">
+        <div class="rev-avatar">👤</div>
+        <div>
+          <div class="rev-name">${r.name}</div>
+          <div class="rev-stars">${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="rev-date">${r.date}</div>
+          <div class="rev-source">Google Maps</div>
+        </div>
+      </div>
+      <div class="rev-text">${r.text}</div>
+      ${r.answered
+        ? `<div class="rev-reply">🤖 ${r.reply}</div>`
+        : `<button class="rev-gen-btn" id="rev-btn-${i}" onclick="genRevReply(${i})">${TR[lang].revGenBtn}</button>
+           <div class="rev-reply hidden" id="rev-reply-${i}"></div>`
+      }
+    </div>
+  `).join('');
+}
+
+async function genRevReply(i) {
+  const r = reviews[i];
+  const btn = document.getElementById(`rev-btn-${i}`);
+  btn.innerHTML = '<div class="ldots"><span></span><span></span><span></span></div> AI генерирует...';
+  btn.disabled = true;
+
+  const sysP = lang==='ro'
+    ? 'Ești managerul service-ului auto AutoAI. Scrie un răspuns scurt, profesionist și cald la această recenzie Google. Max 2-3 propoziții. Fără asteriscuri.'
+    : 'Ты менеджер автосервиса AutoAI. Напиши короткий, профессиональный и тёплый ответ на отзыв в Google. Максимум 2-3 предложения. Без звёздочек.';
+
+  try {
+    const resp = await fetch(WORKER,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:200,system:sysP,
+        messages:[{role:'user',content:`Отзыв от ${r.name}: ${r.text}`}]})
+    });
+    const data = await resp.json();
+    const reply = data.content?.[0]?.text||'...';
+    btn.classList.add('hidden');
+    const replyEl = document.getElementById(`rev-reply-${i}`);
+    replyEl.classList.remove('hidden');
+    replyEl.textContent = '🤖 '+reply;
+    revCount = Math.max(0, revCount-1);
+    document.getElementById('rev-counter').textContent = revCount;
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = TR[lang].revGenBtn;
+  }
+}
+
+// ── INIT ──
+renderDialogs();
+selectDialog(0);
+renderCars();
+renderChips();
+renderPatients();
+renderReviews();
+</script>
+</body>
+</html>

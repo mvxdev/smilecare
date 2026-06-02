@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Equity Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0f;
+  --bg2: #16161a;
+  --bg3: #1e1e24;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0f0f0;
+  --muted: #888;
+  --dim: #555;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --blue: #60a5fa;
+  --card-bg: #1a1a20;
+  --card-border: rgba(255,255,255,0.12);
+  --red-card: #ff4d4d;
+  --black-card: #f0f0f0;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 4rem;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header p {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.container {
+  width: 100%;
+  max-width: 620px;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-label {
+  font-size: 11px;
+  font-family: 'DM Mono', monospace;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.cards-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+/* Playing card */
+.pcard {
+  width: 62px;
+  height: 90px;
+  border-radius: 9px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 7px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  user-select: none;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pcard:hover { transform: translateY(-4px); border-color: var(--border2); }
+.pcard.selected { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+
+.pcard.empty {
+  background: var(--bg3);
+  border-style: dashed;
+  align-items: center;
+  justify-content: center;
+}
+.pcard.empty .plus { font-size: 20px; color: var(--dim); }
+
+.pcard .corner { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; }
+.pcard .corner.bot { align-items: flex-end; transform: rotate(180deg); }
+.pcard .c-rank { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.pcard .c-suit { font-size: 11px; margin-top: 1px; }
+.pcard .center-suit { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 30px; }
+
+.pcard.red .c-rank, .pcard.red .c-suit, .pcard.red .center-suit { color: var(--red-card); }
+.pcard.black .c-rank, .pcard.black .c-suit, .pcard.black .center-suit { color: var(--black-card); }
+
+/* Street labels */
+.street-group { margin-bottom: 12px; }
+.street-name {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+/* Picker */
+.picker {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.15s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.picker-hint { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+
+.suit-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.suit-btn {
+  width: 48px; height: 48px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.1s, border-color 0.1s;
+  color: var(--text);
+}
+.suit-btn.red-suit { color: var(--red-card); }
+.suit-btn:hover { background: var(--bg); border-color: var(--border2); }
+.suit-btn.active { background: rgba(96,165,250,0.15); border-color: var(--blue); }
+
+.rank-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+
+.rank-btn {
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'DM Mono', monospace;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.1s, border-color 0.1s;
+}
+.rank-btn:hover { background: rgba(96,165,250,0.1); border-color: var(--blue); }
+.rank-btn.used { opacity: 0.15; pointer-events: none; }
+.rank-btn.dimmed { opacity: 0.3; cursor: default; }
+
+/* Buttons */
+.btn-row { display: flex; gap: 10px; margin-top: 0.5rem; }
+
+.btn-primary {
+  flex: 1;
+  height: 46px;
+  border-radius: 10px;
+  border: none;
+  background: var(--blue);
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Syne', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-reset {
+  width: 90px;
+  height: 46px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-family: 'Syne', sans-serif;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-reset:hover { border-color: var(--text); color: var(--text); }
+
+.hint {
+  font-size: 12px;
+  color: var(--dim);
+  font-family: 'DM Mono', monospace;
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+/* Results */
+.results { margin-top: 2rem; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.meter { margin-bottom: 14px; }
+.meter-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.meter-name { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.meter-pct { font-size: 22px; font-weight: 700; font-family: 'DM Mono', monospace; }
+
+.bar-bg {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg3);
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  width: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 1.25rem;
+}
+
+.stat {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.stat-l { font-size: 10px; color: var(--dim); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.stat-v { font-size: 17px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text); }
+
+footer {
+  margin-top: 3rem;
+  font-size: 11px;
+  color: var(--dim);
+  font-family: 'DM Mono', monospace;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Poker Equity</h1>
+  <p>Texas Hold'em · Monte Carlo · 10 000 симуляций</p>
+</header>
+
+<div class="container">
+
+  <div class="section">
+    <div class="section-label">Моя рука</div>
+    <div class="cards-row" id="hand-row"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Борд</div>
+    <div class="street-group">
+      <div class="street-name">Флоп</div>
+      <div class="cards-row" id="flop-row"></div>
+    </div>
+    <div class="street-group">
+      <div class="street-name">Тёрн</div>
+      <div class="cards-row" id="turn-row"></div>
+    </div>
+    <div class="street-group">
+      <div class="street-name">Ривер</div>
+      <div class="cards-row" id="river-row"></div>
+    </div>
+  </div>
+
+  <div id="picker" style="display:none" class="picker">
+    <div class="picker-hint">1 — выбери масть · 2 — выбери номинал</div>
+    <div class="suit-row">
+      <button class="suit-btn" id="ps-s" onclick="selSuit('s')">♠</button>
+      <button class="suit-btn red-suit" id="ps-h" onclick="selSuit('h')">♥</button>
+      <button class="suit-btn red-suit" id="ps-d" onclick="selSuit('d')">♦</button>
+      <button class="suit-btn" id="ps-c" onclick="selSuit('c')">♣</button>
+    </div>
+    <div class="rank-grid" id="rank-grid"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-primary" onclick="calculate()">Посчитать equity</button>
+    <button class="btn-reset" onclick="resetAll()">Сбросить</button>
+  </div>
+  <div class="hint" id="hint">Выбери 2 карты руки</div>
+
+  <div id="results" style="display:none" class="results">
+    <div class="divider"></div>
+
+    <div class="meter">
+      <div class="meter-head">
+        <span class="meter-name">Моя рука</span>
+        <span class="meter-pct" id="wp" style="color:var(--green)">–</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" id="wb" style="background:var(--green)"></div></div>
+    </div>
+
+    <div class="meter">
+      <div class="meter-head">
+        <span class="meter-name">Ничья</span>
+        <span class="meter-pct" id="tp" style="color:var(--amber)">–</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" id="tb" style="background:var(--amber)"></div></div>
+    </div>
+
+    <div class="meter">
+      <div class="meter-head">
+        <span class="meter-name">Противник</span>
+        <span class="meter-pct" id="lp" style="color:var(--red)">–</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" id="lb" style="background:var(--red)"></div></div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat"><div class="stat-l">Симуляций</div><div class="stat-v" id="sc">–</div></div>
+      <div class="stat"><div class="stat-l">Аутс</div><div class="stat-v" id="ov">–</div></div>
+      <div class="stat"><div class="stat-l">Рука</div><div class="stat-v" id="hs" style="font-size:13px">–</div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>made with claude · mvxdev</footer>
+
+<script>
+const RANKS=['2','3','4','5','6','7','8','9','T','J','Q','K','A'];
+const SUITS=['s','h','d','c'];
+const SYM={s:'♠',h:'♥',d:'♦',c:'♣'};
+const COL={s:'black',h:'red',d:'red',c:'black'};
+const RV={};RANKS.forEach((r,i)=>RV[r]=i);
+const HNAMES=['Старшая','Пара','Две пары','Тройка','Стрит','Флеш','Фулл','Каре','Стрит-флеш'];
+
+let hand=[null,null];
+let board=[null,null,null,null,null];
+let activePicker=null,activeSuit=null;
+
+function cardHTML(c,slotId){
+  if(!c) return `<div class="pcard empty" id="${slotId}" onclick="openPicker('${slotId}')"><span class="plus">+</span></div>`;
+  const cl=COL[c.s],sym=SYM[c.s];
+  return `<div class="pcard ${cl}" id="${slotId}" onclick="openPicker('${slotId}')">
+    <div class="corner"><span class="c-rank">${c.r}</span><span class="c-suit">${sym}</span></div>
+    <div class="center-suit">${sym}</div>
+    <div class="corner bot"><span class="c-rank">${c.r}</span><span class="c-suit">${sym}</span></div>
+  </div>`;
+}
+
+function renderAll(){
+  document.getElementById('hand-row').innerHTML=hand.map((_,i)=>cardHTML(hand[i],'h'+i)).join('');
+  document.getElementById('flop-row').innerHTML=[0,1,2].map(i=>cardHTML(board[i],'b'+i)).join('');
+  document.getElementById('turn-row').innerHTML=cardHTML(board[3],'b3');
+  document.getElementById('river-row').innerHTML=cardHTML(board[4],'b4');
+}
+
+function openPicker(slotId){
+  activePicker=slotId;activeSuit=null;
+  document.querySelectorAll('.suit-btn').forEach(b=>b.classList.remove('active'));
+  buildRanks();
+  document.getElementById('picker').style.display='block';
+  const el=document.getElementById(slotId);
+  if(el) el.classList.add('selected');
+}
+
+function selSuit(s){
+  activeSuit=s;
+  document.querySelectorAll('.suit-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ps-'+s).classList.add('active');
+  buildRanks();
+}
+
+function getUsed(){
+  return [...hand,...board].filter(Boolean).map(c=>c.r+c.s);
+}
+
+function buildRanks(){
+  const used=getUsed();
+  const grid=document.getElementById('rank-grid');
+  grid.innerHTML='';
+  [...RANKS].reverse().forEach(r=>{
+    const btn=document.createElement('button');
+    btn.className='rank-btn';btn.textContent=r;
+    if(!activeSuit){btn.classList.add('dimmed');}
+    else if(used.includes(r+activeSuit)){btn.classList.add('used');}
+    btn.onclick=()=>{if(!activeSuit)return;placeCard({r,s:activeSuit});};
+    grid.appendChild(btn);
+  });
+}
+
+function placeCard(card){
+  const id=activePicker;
+  if(id.startsWith('h'))hand[parseInt(id[1])]=card;
+  else board[parseInt(id[1])]=card;
+  document.getElementById('picker').style.display='none';
+  activePicker=null;activeSuit=null;
+  renderAll();updateHint();
+}
+
+function updateHint(){
+  document.getElementById('hint').textContent=hand[0]&&hand[1]?'Готово — жми «Посчитать equity»':'Выбери 2 карты руки';
+}
+
+function resetAll(){
+  hand=[null,null];board=[null,null,null,null,null];
+  document.getElementById('picker').style.display='none';
+  document.getElementById('results').style.display='none';
+  renderAll();updateHint();
+}
+
+function buildDeck(excl){
+  const d=[];
+  RANKS.forEach(r=>SUITS.forEach(s=>{if(!excl.includes(r+s))d.push({r,s});}));
+  return d;
+}
+
+function handRank(cards){
+  const s=[...cards].sort((a,b)=>RV[b.r]-RV[a.r]);
+  const vs=s.map(c=>RV[c.r]),su=s.map(c=>c.s);
+  const rc={};vs.forEach(v=>rc[v]=(rc[v]||0)+1);
+  const cnts=Object.values(rc).sort((a,b)=>b-a);
+  const isF=su.every(x=>x===su[0]);
+  const uniq=[...new Set(vs)].sort((a,b)=>b-a);
+  let isSt=false,stH=0;
+  for(let i=0;i<=uniq.length-5;i++){if(uniq[i]-uniq[i+4]===4){isSt=true;stH=uniq[i];break;}}
+  if(!isSt&&uniq.includes(12)&&uniq.includes(0)&&uniq.includes(1)&&uniq.includes(2)&&uniq.includes(3)){isSt=true;stH=3;}
+  if(isF&&isSt)return[8,stH];
+  if(cnts[0]===4)return[7,...Object.keys(rc).filter(k=>rc[k]===4).map(Number)];
+  if(cnts[0]===3&&cnts[1]===2)return[6];
+  if(isF)return[5,...vs];
+  if(isSt)return[4,stH];
+  if(cnts[0]===3)return[3,...Object.keys(rc).filter(k=>rc[k]===3).map(Number)];
+  if(cnts[0]===2&&cnts[1]===2)return[2,...Object.keys(rc).filter(k=>rc[k]===2).map(Number).sort((a,b)=>b-a)];
+  if(cnts[0]===2)return[1,...Object.keys(rc).filter(k=>rc[k]===2).map(Number)];
+  return[0,...vs];
+}
+
+function cmpR(a,b){
+  for(let i=0;i<Math.max(a.length,b.length);i++){const ai=a[i]??-1,bi=b[i]??-1;if(ai>bi)return 1;if(ai<bi)return-1;}return 0;
+}
+
+function pickBest(cards){
+  if(cards.length<=5)return handRank(cards);
+  let best=null;
+  for(let i=0;i<cards.length;i++)for(let j=i+1;j<cards.length;j++){
+    const five=cards.filter((_,k)=>k!==i&&k!==j);
+    const r=handRank(five);if(!best||cmpR(r,best)>0)best=r;
+  }
+  return best;
+}
+
+function countOuts(){
+  const known=[...hand.filter(Boolean),...board.filter(Boolean)];
+  if(known.length<4)return'–';
+  const deck=buildDeck(getUsed());
+  const myR=pickBest(known);
+  let outs=0;
+  deck.forEach(c=>{const r=pickBest([...known,c]);if(cmpR(r,myR)>0)outs++;});
+  return outs;
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr;
+}
+
+function calculate(){
+  if(!hand[0]||!hand[1])return;
+  const SIMS=10000;let w=0,t=0,l=0;
+  const known=board.filter(Boolean);
+  const need=5-known.length;
+  const deck=buildDeck(getUsed());
+  for(let i=0;i<SIMS;i++){
+    const d=shuffle([...deck]);
+    const run=[...known,...d.slice(0,need)];
+    const opp=[d[need],d[need+1]];
+    const mr=pickBest([hand[0],hand[1],...run]);
+    const or=pickBest([opp[0],opp[1],...run]);
+    const c=cmpR(mr,or);
+    if(c>0)w++;else if(c===0)t++;else l++;
+  }
+  const wp=(w/SIMS*100).toFixed(1),tp=(t/SIMS*100).toFixed(1),lp=(l/SIMS*100).toFixed(1);
+  document.getElementById('wp').textContent=wp+'%';
+  document.getElementById('tp').textContent=tp+'%';
+  document.getElementById('lp').textContent=lp+'%';
+  document.getElementById('wb').style.width=wp+'%';
+  document.getElementById('tb').style.width=tp+'%';
+  document.getElementById('lb').style.width=lp+'%';
+  document.getElementById('sc').textContent=SIMS.toLocaleString();
+  const outs=countOuts();
+  document.getElementById('ov').textContent=typeof outs==='number'?outs+'':outs;
+  const known2=[...hand.filter(Boolean),...board.filter(Boolean)];
+  document.getElementById('hs').textContent=known2.length>=5?HNAMES[pickBest(known2)[0]]:'–';
+  const res=document.getElementById('results');
+  res.style.display='none';void res.offsetWidth;res.style.display='block';
+}
+
+renderAll();updateHint();
+</script>
+</body>
+</html>

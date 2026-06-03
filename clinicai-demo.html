@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClinicAI — SmileCare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #1a6b4a;
+  --green-light: #f0f7f4;
+  --green-mid: #e0f0e9;
+  --green-dark: #134f37;
+  --green-border: rgba(26,107,74,0.15);
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --text-hint: #9ca3af;
+  --border: #e5e7eb;
+  --bg: #ffffff;
+  --surface: #f9fafb;
+  --surface2: #f3f4f6;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f0f2f5;
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── NAV ─── */
+.nav {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--green);
+  font-weight: 500;
+  margin-right: 32px;
+  letter-spacing: -0.3px;
+}
+
+.nav-logo span { color: var(--text-muted); font-size: 13px; font-family: 'Inter', sans-serif; font-weight: 400; margin-left: 6px; }
+
+.nav-tabs { display: flex; gap: 2px; flex: 1; }
+
+.nav-tab {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-tab:hover { background: var(--surface); color: var(--text); }
+.nav-tab.active { background: var(--green-light); color: var(--green); }
+
+.nav-tab svg { width: 15px; height: 15px; }
+
+.nav-badge {
+  background: var(--green);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ─── VIEWS ─── */
+.view { display: none; flex: 1; }
+.view.active { display: flex; }
+
+/* ─── WIDGET VIEW ─── */
+#view-widget {
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: linear-gradient(135deg, #f0f7f4 0%, #f0f2f5 50%, #f5f0f7 100%);
+  position: relative;
+}
+
+#view-widget::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 50%, rgba(26,107,74,0.04) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(26,107,74,0.03) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.widget-preview-label {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: var(--text-hint);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ─── CHAT WIDGET ─── */
+.chat-widget {
+  width: 360px;
+  height: 580px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.chat-header {
+  padding: 16px 18px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--green-light);
+  border: 2px solid var(--green-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--green);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  background: #22c55e;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.chat-header-info { flex: 1; }
+.chat-header-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.chat-header-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; display: flex; align-items: center; gap: 4px; }
+.chat-header-sub::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #22c55e; }
+
+.chat-header-powered {
+  font-size: 10px;
+  color: var(--text-hint);
+  letter-spacing: 0.3px;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.msg-row { display: flex; gap: 8px; max-width: 88%; animation: msgIn 0.2s ease; }
+.msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
+.msg-row.bot { align-self: flex-start; }
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.msg-content { display: flex; flex-direction: column; gap: 2px; }
+
+.msg-bubble {
+  padding: 9px 13px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bot .msg-bubble {
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 4px 14px 14px 14px;
+  border: 1px solid var(--border);
+}
+
+.user .msg-bubble {
+  background: var(--green);
+  color: #fff;
+  border-radius: 14px 4px 14px 14px;
+}
+
+.msg-time {
+  font-size: 10px;
+  color: var(--text-hint);
+  padding: 0 4px;
+}
+
+.user .msg-time { text-align: right; }
+
+.typing-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+  padding: 11px 14px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text-hint);
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Confirm card */
+.confirm-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 4px;
+  width: 220px;
+}
+
+.confirm-card-header {
+  background: var(--green-light);
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.confirm-card-body { padding: 10px 12px; }
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--surface2);
+}
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row .ck { color: var(--text-muted); white-space: nowrap; }
+.confirm-row .cv { color: var(--text); font-weight: 500; text-align: right; }
+
+.confirm-actions { display: flex; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--border); }
+
+.btn-confirm-yes {
+  flex: 1; padding: 7px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.btn-confirm-yes:hover { background: var(--green-dark); }
+
+.btn-confirm-no {
+  flex: 1; padding: 7px;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.btn-confirm-no:hover { background: var(--surface); }
+
+/* Quick replies */
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 16px 10px;
+}
+
+.qr-chip {
+  font-size: 12px;
+  padding: 5px 11px;
+  border: 1px solid var(--green-border);
+  border-radius: 20px;
+  background: var(--green-light);
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+.qr-chip:hover { background: var(--green-mid); border-color: var(--green); }
+
+/* Input */
+.chat-input-area {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+}
+
+.chat-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 9px 15px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.chat-input:focus { border-color: var(--green); background: #fff; }
+.chat-input::placeholder { color: var(--text-hint); }
+
+.chat-send {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--green);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.chat-send:hover { background: var(--green-dark); transform: scale(1.05); }
+.chat-send svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ─── ADMIN VIEW ─── */
+#view-admin {
+  flex-direction: column;
+  padding: 0;
+}
+
+.admin-wrap {
+  display: flex;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+/* Sidebar */
+.admin-sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+
+.filter-tabs { display: flex; gap: 4px; }
+.filter-tab {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: var(--surface2);
+  color: var(--text-muted);
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+}
+.filter-tab.active { background: var(--green); color: #fff; }
+
+.booking-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.booking-list::-webkit-scrollbar { width: 4px; }
+.booking-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.booking-item {
+  padding: 11px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  margin-bottom: 4px;
+}
+.booking-item:hover { background: var(--surface); }
+.booking-item.active { background: var(--green-light); border-color: var(--green-border); }
+
+.booking-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.booking-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.booking-item-time { font-size: 11px; color: var(--text-hint); white-space: nowrap; }
+.booking-item-service { font-size: 12px; color: var(--text-muted); margin-bottom: 5px; }
+.booking-item-bottom { display: flex; align-items: center; gap: 6px; }
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.2px;
+}
+.status-new { background: #fef3c7; color: #92400e; }
+.status-confirmed { background: #d1fae5; color: #065f46; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+
+.booking-lang { font-size: 10px; color: var(--text-hint); margin-left: auto; }
+
+/* Main panel */
+.admin-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-main::-webkit-scrollbar { width: 6px; }
+.admin-main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.detail-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-hint);
+  gap: 10px;
+}
+.detail-empty svg { width: 40px; height: 40px; opacity: 0.3; }
+.detail-empty p { font-size: 13px; }
+
+.detail-wrap { padding: 24px; }
+
+.detail-header {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.detail-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.detail-name { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.detail-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+.detail-meta span { display: flex; align-items: center; gap: 4px; }
+
+.detail-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.action-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+  border: none;
+}
+.action-btn.primary { background: var(--green); color: #fff; }
+.action-btn.primary:hover { background: var(--green-dark); }
+.action-btn.secondary { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+.action-btn.secondary:hover { background: var(--border); }
+.action-btn.danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.action-btn.danger:hover { background: #fca5a5; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.detail-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-hint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.detail-field { margin-bottom: 10px; }
+.detail-field:last-child { margin-bottom: 0; }
+.detail-field-label { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+.detail-field-value { font-size: 13.5px; color: var(--text); font-weight: 500; }
+.detail-field-value.green { color: var(--green); }
+
+/* Conversation */
+.conv-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.conv-card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-hint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.conv-msgs { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.conv-msg { display: flex; gap: 8px; }
+.conv-msg.user-msg { flex-direction: row-reverse; }
+
+.conv-msg-avatar {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.bot-avatar { background: var(--green-light); color: var(--green); }
+.user-avatar { background: var(--surface2); color: var(--text-muted); }
+
+.conv-msg-body { max-width: 75%; }
+.conv-msg-bubble {
+  padding: 8px 11px;
+  border-radius: 3px 10px 10px 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.user-msg .conv-msg-bubble { border-radius: 10px 3px 10px 10px; }
+.bot-bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.user-bubble { background: var(--green); color: #fff; }
+.conv-msg-time { font-size: 10px; color: var(--text-hint); margin-top: 2px; padding: 0 2px; }
+.user-msg .conv-msg-time { text-align: right; }
+
+/* Stats bar */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.stat-item { text-align: center; }
+.stat-value { font-size: 22px; font-weight: 600; color: var(--text); }
+.stat-value.green { color: var(--green); }
+.stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">SmileCare <span>ClinicAI</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('widget')" id="tab-widget">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Виджет пациента
+    </button>
+    <button class="nav-tab" onclick="switchView('admin')" id="tab-admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Панель администратора
+      <span class="nav-badge" id="new-badge">3</span>
+    </button>
+  </div>
+</nav>
+
+<!-- WIDGET VIEW -->
+<div class="view active" id="view-widget">
+  <div class="widget-preview-label">Предпросмотр виджета на сайте клиники</div>
+  <div class="chat-widget">
+    <div class="chat-header">
+      <div class="chat-header-avatar">
+        D
+        <div class="online-dot"></div>
+      </div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Diana — ассистент клиники</div>
+        <div class="chat-header-sub">онлайн · отвечаю мгновенно</div>
+      </div>
+      <div class="chat-header-powered">by<br>MX Systems</div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages"></div>
+
+    <div class="quick-replies" id="quick-replies"></div>
+
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chat-input" placeholder="Напишите сообщение..." />
+      <button class="chat-send" id="send-btn" aria-label="Отправить">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN VIEW -->
+<div class="view" id="view-admin">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value green" id="stat-total">0</div>
+      <div class="stat-label">Всего записей</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" style="color:#f59e0b" id="stat-new">0</div>
+      <div class="stat-label">Новых</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" style="color:#10b981" id="stat-confirmed">0</div>
+      <div class="stat-label">Подтверждённых</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" style="color:#6b7280" id="stat-today">0</div>
+      <div class="stat-label">Сегодня</div>
+    </div>
+  </div>
+
+  <div class="admin-wrap">
+    <div class="admin-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">Записи на приём</div>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="filterBookings('all', this)">Все</button>
+          <button class="filter-tab" onclick="filterBookings('new', this)">Новые</button>
+          <button class="filter-tab" onclick="filterBookings('confirmed', this)">Подтв.</button>
+        </div>
+      </div>
+      <div class="booking-list" id="booking-list"></div>
+    </div>
+
+    <div class="admin-main" id="admin-main">
+      <div class="detail-empty" id="detail-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p>Выберите запись для просмотра</p>
+      </div>
+      <div class="detail-wrap" id="detail-wrap" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SHARED STATE ───
+const DB = {
+  bookings: [],
+  conversations: {}
+};
+
+function now() {
+  return new Date().toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+}
+
+function todayStr() {
+  return new Date().toLocaleDateString('ru', {day:'numeric', month:'short'});
+}
+
+// ─── CHAT WIDGET ───
+const SYSTEM = `Ты — Diana, AI-ассистент стоматологической клиники SmileCare в Кишинёве. Помогаешь пациентам записаться на приём. Отвечай кратко (2-4 предложения), тепло, профессионально.
+
+Услуги и цены:
+- Консультация и осмотр: 150 MDL
+- Профессиональная чистка (игиенизация): 800 MDL  
+- Лечение кариеса: 600-1200 MDL (зависит от сложности)
+- Имплант: от 12 000 MDL
+- Брекеты/выравнивание: от 18 000 MDL
+- Отбеливание: 2 500 MDL
+- Удаление зуба: 400-900 MDL
+
+Врачи:
+- Dr. Marina Cebotari — терапевт, пн/ср/пт 9:00-18:00
+- Dr. Andrei Lungu — хирург и имплантолог, вт/чт 10:00-19:00
+- Dr. Elena Munteanu — ортодонт, пн-пт 14:00-20:00
+
+Адрес: ул. Штефан чел Маре 50, Кишинёв. Тел: +373 22 123 456
+
+Для записи нужно собрать: 1) услугу, 2) удобный день и время, 3) имя пациента, 4) номер телефона.
+Когда все 4 пункта собраны — обязательно выведи строку: ЗАПИСЬ_ГОТОВА: [услуга] | [день время] | [имя] | [телефон]
+
+Будь естественной — не задавай все вопросы сразу, веди диалог. Если пишут на румынском — отвечай на румынском.`;
+
+let chatHistory = [];
+let pendingBooking = null;
+let currentConvId = null;
+let convMessages = [];
+
+const msgsEl = document.getElementById('chat-messages');
+const inputEl = document.getElementById('chat-input');
+const qrEl = document.getElementById('quick-replies');
+
+function addChatMsg(text, role, extra) {
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+
+  if (role === 'bot') {
+    const av = document.createElement('div');
+    av.className = 'msg-avatar';
+    av.textContent = 'D';
+    row.appendChild(av);
+  }
+
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+
+  if (extra && extra.type === 'confirm') {
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble bot';
+    bubble.style.padding = '0';
+    bubble.style.background = 'transparent';
+    bubble.style.border = 'none';
+
+    const card = document.createElement('div');
+    card.className = 'confirm-card';
+    card.innerHTML = `
+      <div class="confirm-card-header">Проверьте данные записи</div>
+      <div class="confirm-card-body">
+        <div class="confirm-row"><span class="ck">Услуга</span><span class="cv">${extra.data.service}</span></div>
+        <div class="confirm-row"><span class="ck">Время</span><span class="cv">${extra.data.time}</span></div>
+        <div class="confirm-row"><span class="ck">Пациент</span><span class="cv">${extra.data.name}</span></div>
+        <div class="confirm-row"><span class="ck">Телефон</span><span class="cv">${extra.data.phone}</span></div>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn-confirm-yes" onclick="confirmBooking(true)">Подтвердить</button>
+        <button class="btn-confirm-no" onclick="confirmBooking(false)">Изменить</button>
+      </div>
+    `;
+    bubble.appendChild(card);
+    content.appendChild(bubble);
+  } else {
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+    content.appendChild(bubble);
+  }
+
+  const timeEl = document.createElement('div');
+  timeEl.className = 'msg-time';
+  timeEl.textContent = now();
+  content.appendChild(timeEl);
+
+  row.appendChild(content);
+  msgsEl.appendChild(row);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  convMessages.push({ role, text, time: now() });
+  if (currentConvId) DB.conversations[currentConvId] = [...convMessages];
+}
+
+function showTyping() {
+  const row = document.createElement('div');
+  row.className = 'msg-row bot';
+  row.id = 'typing';
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = 'D';
+  row.appendChild(av);
+  const t = document.createElement('div');
+  t.className = 'typing-bubble';
+  t.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  row.appendChild(t);
+  msgsEl.appendChild(row);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function setQuickReplies(items) {
+  qrEl.innerHTML = '';
+  items.forEach(text => {
+    const btn = document.createElement('button');
+    btn.className = 'qr-chip';
+    btn.textContent = text;
+    btn.onclick = () => sendMsg(text);
+    qrEl.appendChild(btn);
+  });
+}
+
+function parseBooking(text) {
+  const m = text.match(/ЗАПИСЬ_ГОТОВА:\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+)/);
+  if (!m) return null;
+  return { service: m[1].trim(), time: m[2].trim(), name: m[3].trim(), phone: m[4].trim() };
+}
+
+async function sendMsg(text) {
+  if (!text.trim()) return;
+  qrEl.innerHTML = '';
+  addChatMsg(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  inputEl.value = '';
+  showTyping();
+
+  try {
+    const res = await fetch('https://smilecare-proxy.badmvx7.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Произошла ошибка. Попробуйте ещё раз.';
+    removeTyping();
+
+    const booking = parseBooking(reply);
+    if (booking) {
+      pendingBooking = booking;
+      const cleanReply = reply.replace(/ЗАПИСЬ_ГОТОВА:.*/, '').trim();
+      if (cleanReply) addChatMsg(cleanReply, 'bot');
+      addChatMsg('', 'bot', { type: 'confirm', data: booking });
+    } else {
+      addChatMsg(reply, 'bot');
+    }
+    chatHistory.push({ role: 'assistant', content: reply });
+
+    if (chatHistory.length <= 2) {
+      setQuickReplies(['Записаться на чистку', 'Цены на лечение', 'Когда принимает доктор?', 'Адрес клиники']);
+    }
+  } catch(e) {
+    removeTyping();
+    addChatMsg('Ошибка соединения. Попробуйте позже.', 'bot');
+  }
+}
+
+window.confirmBooking = function(yes) {
+  if (yes && pendingBooking) {
+    const id = Date.now().toString();
+    currentConvId = id;
+    DB.conversations[id] = [...convMessages];
+
+    const booking = {
+      id,
+      ...pendingBooking,
+      status: 'new',
+      createdAt: new Date(),
+      lang: 'ru',
+      conversation: [...convMessages]
+    };
+    DB.bookings.unshift(booking);
+    updateStats();
+    renderBookingList();
+
+    const msg = `Отлично, ${pendingBooking.name}! Запись подтверждена.\n\nВас ждём в SmileCare. Мы напомним за день до визита — ждите SMS на ${pendingBooking.phone}.\n\nЕсли понадобится что-то изменить — напишите сюда. 🦷`;
+    addChatMsg(msg, 'bot');
+    chatHistory.push({ role: 'assistant', content: msg });
+    document.getElementById('new-badge').textContent = DB.bookings.filter(b => b.status === 'new').length;
+  } else {
+    addChatMsg('Конечно! Что хотите изменить?', 'bot');
+    chatHistory.push({ role: 'assistant', content: 'Конечно! Что хотите изменить?' });
+  }
+  pendingBooking = null;
+};
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendMsg(inputEl.value); }
+});
+document.getElementById('send-btn').onclick = () => sendMsg(inputEl.value);
+
+// Init greeting
+(async () => {
+  currentConvId = 'init_' + Date.now();
+  await new Promise(r => setTimeout(r, 600));
+  showTyping();
+  await new Promise(r => setTimeout(r, 900));
+  removeTyping();
+  const greeting = 'Добрый день! Я Diana, ассистент клиники SmileCare 🦷\n\nПомогу записаться на приём, отвечу на вопросы о ценах и врачах. Чем могу помочь?';
+  addChatMsg(greeting, 'bot');
+  chatHistory.push({ role: 'assistant', content: greeting });
+  setQuickReplies(['Записаться на приём', 'Узнать цены', 'Наши врачи', 'Адрес и график']);
+})();
+
+// ─── ADMIN PANEL ───
+function switchView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'admin') renderBookingList();
+}
+
+// Seed demo data
+const demoBookings = [
+  {
+    id: 'demo1',
+    name: 'Мария Иванова',
+    phone: '+373 69 123 456',
+    service: 'Профессиональная чистка',
+    time: 'Пятница 16:00',
+    status: 'new',
+    lang: 'ru',
+    createdAt: new Date(Date.now() - 8 * 60000),
+    conversation: [
+      { role: 'bot', text: 'Добрый день! Я Diana, ассистент клиники SmileCare. Чем могу помочь?', time: '14:52' },
+      { role: 'user', text: 'Здравствуйте, хочу записаться на чистку зубов', time: '14:53' },
+      { role: 'bot', text: 'Отлично! Профессиональная чистка (игиенизация) стоит 800 MDL и занимает около часа. Принимает Dr. Marina Cebotari в пн/ср/пт с 9:00 до 18:00.\n\nКакой день вам удобен?', time: '14:53' },
+      { role: 'user', text: 'Пятница вечером есть?', time: '14:54' },
+      { role: 'bot', text: 'Да, в пятницу есть слот в 16:00 и в 17:00. Какое время предпочитаете?', time: '14:54' },
+      { role: 'user', text: '16:00 подходит', time: '14:55' },
+      { role: 'bot', text: 'Отлично! Скажите, пожалуйста, ваше имя и номер телефона для подтверждения записи.', time: '14:55' },
+      { role: 'user', text: 'Мария Иванова, +373 69 123 456', time: '14:56' },
+      { role: 'bot', text: 'Мария, запись оформлена! Ждём вас в пятницу в 16:00 на профессиональную чистку. До встречи в SmileCare! 🦷', time: '14:56' }
+    ]
+  },
+  {
+    id: 'demo2',
+    name: 'Alexandru Popescu',
+    phone: '+373 79 234 567',
+    service: 'Consultație + evaluare implant',
+    time: 'Joi 11:00',
+    status: 'confirmed',
+    lang: 'ro',
+    createdAt: new Date(Date.now() - 35 * 60000),
+    conversation: [
+      { role: 'bot', text: 'Bună ziua! Sunt Diana, asistentul clinicii SmileCare. Cu ce vă pot ajuta?', time: '14:20' },
+      { role: 'user', text: 'Bună, vreau să mă interesez despre implant dentar', time: '14:21' },
+      { role: 'bot', text: 'Bineînțeles! Implantul dentar la SmileCare începe de la 12 000 MDL. Dr. Andrei Lungu, chirurgul nostru implantolog, primește marți și joi între 10:00-19:00.\n\nVă recomand să începem cu o consultație de evaluare gratuită. Vă convine joi?', time: '14:21' },
+      { role: 'user', text: 'Da, joi la 11 ar fi bine', time: '14:22' },
+      { role: 'bot', text: 'Perfect! Numele dvs. și numărul de telefon, vă rog.', time: '14:22' },
+      { role: 'user', text: 'Alexandru Popescu, 079234567', time: '14:23' },
+      { role: 'bot', text: 'Alexandru, v-am înregistrat pentru joi la 11:00 cu Dr. Andrei Lungu. Ne vedem la SmileCare! 🦷', time: '14:23' }
+    ]
+  },
+  {
+    id: 'demo3',
+    name: 'Елена Константинова',
+    phone: '+373 60 345 678',
+    service: 'Лечение кариеса',
+    time: 'Среда 10:30',
+    status: 'new',
+    lang: 'ru',
+    createdAt: new Date(Date.now() - 2 * 3600000),
+    conversation: [
+      { role: 'bot', text: 'Добрый день! Я Diana, ассистент клиники SmileCare. Чем могу помочь?', time: '12:55' },
+      { role: 'user', text: 'Болит зуб уже 3 дня, нужно срочно', time: '12:56' },
+      { role: 'bot', text: 'Понимаю, это неприятно! Постараемся помочь как можно быстрее. Dr. Marina Cebotari принимает завтра с 9:00. Лечение кариеса стоит 600-1200 MDL в зависимости от сложности.\n\nМожем записать вас на среду в 10:30 — подходит?', time: '12:56' },
+      { role: 'user', text: 'Да, среда 10:30 хорошо. Меня зовут Елена Константинова, +373 60 345 678', time: '12:57' },
+      { role: 'bot', text: 'Елена, записала вас на среду в 10:30 к Dr. Marina Cebotari. Мы пришлём напоминание накануне. Держитесь! 🦷', time: '12:57' }
+    ]
+  }
+];
+
+demoBookings.forEach(b => DB.bookings.push(b));
+
+function updateStats() {
+  const all = DB.bookings;
+  document.getElementById('stat-total').textContent = all.length;
+  document.getElementById('stat-new').textContent = all.filter(b => b.status === 'new').length;
+  document.getElementById('stat-confirmed').textContent = all.filter(b => b.status === 'confirmed').length;
+  const today = new Date().toDateString();
+  document.getElementById('stat-today').textContent = all.filter(b => b.createdAt.toDateString() === today).length;
+  document.getElementById('new-badge').textContent = all.filter(b => b.status === 'new').length;
+}
+
+let currentFilter = 'all';
+let currentBookingId = null;
+
+function filterBookings(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderBookingList();
+}
+
+function renderBookingList() {
+  const list = document.getElementById('booking-list');
+  const filtered = currentFilter === 'all' ? DB.bookings : DB.bookings.filter(b => b.status === currentFilter);
+  list.innerHTML = '';
+  filtered.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'booking-item' + (b.id === currentBookingId ? ' active' : '');
+    const mins = Math.round((Date.now() - b.createdAt) / 60000);
+    const timeAgo = mins < 60 ? `${mins} мин назад` : `${Math.round(mins/60)} ч назад`;
+    const statusLabel = { new: 'Новый', confirmed: 'Подтверждён', cancelled: 'Отменён' }[b.status];
+    const statusClass = { new: 'status-new', confirmed: 'status-confirmed', cancelled: 'status-cancelled' }[b.status];
+    el.innerHTML = `
+      <div class="booking-item-top">
+        <div class="booking-item-name">${b.name}</div>
+        <div class="booking-item-time">${timeAgo}</div>
+      </div>
+      <div class="booking-item-service">${b.service} · ${b.time}</div>
+      <div class="booking-item-bottom">
+        <span class="status-badge ${statusClass}">${statusLabel}</span>
+        <span class="booking-lang">${b.lang === 'ro' ? '🇷🇴 RO' : '🇷🇺 RU'}</span>
+      </div>
+    `;
+    el.onclick = () => showDetail(b.id);
+    list.appendChild(el);
+  });
+}
+
+function showDetail(id) {
+  currentBookingId = id;
+  renderBookingList();
+  const b = DB.bookings.find(x => x.id === id);
+  if (!b) return;
+
+  document.getElementById('detail-empty').style.display = 'none';
+  const wrap = document.getElementById('detail-wrap');
+  wrap.style.display = 'block';
+
+  const initials = b.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  const statusLabel = { new: 'Новый', confirmed: 'Подтверждён', cancelled: 'Отменён' }[b.status];
+  const statusClass = { new: 'status-new', confirmed: 'status-confirmed', cancelled: 'status-cancelled' }[b.status];
+  const mins = Math.round((Date.now() - b.createdAt) / 60000);
+  const timeAgo = mins < 60 ? `${mins} мин назад` : `${Math.round(mins/60)} ч назад`;
+
+  let convHtml = (b.conversation || []).map(m => `
+    <div class="conv-msg ${m.role === 'user' ? 'user-msg' : ''}">
+      <div class="conv-msg-avatar ${m.role === 'bot' ? 'bot-avatar' : 'user-avatar'}">${m.role === 'bot' ? 'D' : 'П'}</div>
+      <div class="conv-msg-body">
+        <div class="conv-msg-bubble ${m.role === 'bot' ? 'bot-bubble' : 'user-bubble'}">${m.text}</div>
+        <div class="conv-msg-time">${m.time}</div>
+      </div>
+    </div>
+  `).join('');
+
+  wrap.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar">${initials}</div>
+      <div style="flex:1">
+        <div class="detail-name">${b.name}</div>
+        <div class="detail-meta">
+          <span>📞 ${b.phone}</span>
+          <span>🕐 ${timeAgo}</span>
+          <span>${b.lang === 'ro' ? '🇷🇴 Română' : '🇷🇺 Русский'}</span>
+          <span class="status-badge ${statusClass}" style="font-size:11px">${statusLabel}</span>
+        </div>
+      </div>
+      <div class="detail-actions">
+        ${b.status === 'new' ? `<button class="action-btn primary" onclick="changeStatus('${b.id}','confirmed')">✓ Подтвердить</button>` : ''}
+        ${b.status !== 'cancelled' ? `<button class="action-btn danger" onclick="changeStatus('${b.id}','cancelled')">Отменить</button>` : ''}
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-card-title">Данные записи</div>
+        <div class="detail-field">
+          <div class="detail-field-label">Услуга</div>
+          <div class="detail-field-value green">${b.service}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Дата и время</div>
+          <div class="detail-field-value">${b.time}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Статус</div>
+          <div class="detail-field-value"><span class="status-badge ${statusClass}">${statusLabel}</span></div>
+        </div>
+      </div>
+      <div class="detail-card">
+        <div class="detail-card-title">Пациент</div>
+        <div class="detail-field">
+          <div class="detail-field-label">Имя</div>
+          <div class="detail-field-value">${b.name}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Телефон</div>
+          <div class="detail-field-value">${b.phone}</div>
+        </div>
+        <div class="detail-field">
+          <div class="detail-field-label">Канал / язык</div>
+          <div class="detail-field-value">${b.lang === 'ro' ? 'Сайт · Română' : 'Сайт · Русский'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="conv-card">
+      <div class="conv-card-header">
+        История разговора
+        <span style="font-size:11px;font-weight:400;color:var(--text-muted)">${b.conversation ? b.conversation.length : 0} сообщений</span>
+      </div>
+      <div class="conv-msgs">${convHtml}</div>
+    </div>
+  `;
+}
+
+window.changeStatus = function(id, status) {
+  const b = DB.bookings.find(x => x.id === id);
+  if (b) {
+    b.status = status;
+    updateStats();
+    renderBookingList();
+    showDetail(id);
+  }
+};
+
+updateStats();
+renderBookingList();
+</script>
+</body>
+</html>

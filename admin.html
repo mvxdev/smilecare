@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmileCare — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --g:#1a6b4a;--gl:#f0f7f4;--gm:#e0f0e9;--gd:#134f37;
+  --tx:#1a1a1a;--tm:#6b7280;--th:#9ca3af;
+  --bd:#e5e7eb;--bg:#fff;--sf:#f9fafb;--s2:#f3f4f6;
+  --r:10px;
+}
+body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;}
+
+/* NAV */
+.nav{background:#fff;border-bottom:1px solid var(--bd);padding:0 18px;display:flex;align-items:center;height:52px;position:sticky;top:0;z-index:100;gap:0;}
+.nav-logo{font-size:14px;font-weight:600;color:var(--g);margin-right:24px;white-space:nowrap;}
+.nav-logo span{color:var(--tm);font-weight:400;font-size:11.5px;margin-left:4px;}
+.nav-tabs{display:flex;gap:1px;flex:1;}
+.ntab{padding:5px 13px;border-radius:6px;font-size:12.5px;font-weight:500;color:var(--tm);cursor:pointer;border:none;background:transparent;transition:all .15s;display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif;white-space:nowrap;}
+.ntab:hover{background:var(--s2);color:var(--tx);}
+.ntab.active{background:var(--gl);color:var(--g);}
+.nbadge{background:var(--g);color:#fff;font-size:10px;font-weight:600;padding:1px 5px;border-radius:9px;min-width:16px;text-align:center;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.refresh-btn{padding:4px 10px;border:1px solid var(--bd);border-radius:6px;font-size:11.5px;font-weight:500;background:#fff;color:var(--tm);cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.refresh-btn:hover{background:var(--sf);}
+.lang-sw{display:flex;gap:2px;background:var(--s2);border-radius:6px;padding:2px;}
+.lang-sw button{padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;background:transparent;color:var(--tm);transition:all .15s;}
+.lang-sw button.active{background:#fff;color:var(--g);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+/* VIEWS */
+.view{display:none;flex:1;flex-direction:column;}
+.view.active{display:flex;}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.stat-item{text-align:center;}
+.stat-val{font-size:20px;font-weight:600;}
+.stat-val.g{color:var(--g);}
+.stat-val.y{color:#f59e0b;}
+.stat-val.gr{color:#10b981;}
+.stat-val.m{color:var(--tm);}
+.stat-lbl{font-size:10.5px;color:var(--tm);margin-top:1px;}
+
+/* MAIN LAYOUT */
+.admin-body{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:240px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;}
+.sb-hdr{padding:10px 12px 8px;border-bottom:1px solid var(--bd);}
+.sb-title{font-size:12px;font-weight:600;margin-bottom:7px;color:var(--tx);}
+.ftabs{display:flex;gap:3px;}
+.ftab{padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;border:none;background:var(--s2);color:var(--tm);transition:all .15s;font-family:'Inter',sans-serif;}
+.ftab.active{background:var(--g);color:#fff;}
+.sb-search{margin-top:7px;}
+.sb-search input{width:100%;border:1px solid var(--bd);border-radius:6px;padding:5px 9px;font-size:11.5px;font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);outline:none;}
+.sb-search input:focus{border-color:var(--g);}
+.blist{flex:1;overflow-y:auto;padding:5px;}
+.blist::-webkit-scrollbar{width:3px;}
+.blist::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+
+.bitem{padding:9px 10px;border-radius:8px;cursor:pointer;transition:all .15s;border:1px solid transparent;margin-bottom:2px;}
+.bitem:hover{background:var(--sf);}
+.bitem.active{background:var(--gl);border-color:rgba(26,107,74,.15);}
+.bitem-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;}
+.bitem-name{font-size:12px;font-weight:600;color:var(--tx);}
+.bitem-time{font-size:10px;color:var(--th);white-space:nowrap;margin-left:4px;}
+.bitem-svc{font-size:11px;color:var(--tm);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bitem-bot{display:flex;align-items:center;gap:4px;}
+.sbadge{font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;}
+.s-new{background:#fef3c7;color:#92400e;}
+.s-conf{background:#d1fae5;color:#065f46;}
+.s-canc{background:#fee2e2;color:#991b1b;}
+.bitem-ch{font-size:10px;color:var(--th);margin-left:auto;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;background:var(--sf);}
+.main::-webkit-scrollbar{width:5px;}
+.main::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+.empty-state{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--th);gap:8px;}
+.empty-state svg{width:34px;height:34px;opacity:.2;}
+.empty-state p{font-size:12.5px;}
+.detail{padding:18px;}
+
+/* Detail */
+.d-header{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+.d-av{width:40px;height:40px;border-radius:50%;background:var(--gl);color:var(--g);font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.d-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+.d-meta{font-size:11px;color:var(--tm);display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.d-actions{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
+.abtn{padding:5px 12px;border-radius:6px;font-size:11.5px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;border:none;}
+.abtn.pri{background:var(--g);color:#fff;}
+.abtn.pri:hover{background:var(--gd);}
+.abtn.sec{background:#fff;color:var(--tm);border:1px solid var(--bd);}
+.abtn.sec:hover{background:var(--sf);}
+.abtn.dan{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.abtn.dan:hover{background:#fca5a5;}
+
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.dcard{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
+.dcard-ttl{font-size:10px;font-weight:600;color:var(--th);text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px;}
+.dfield{margin-bottom:7px;}
+.dfield:last-child{margin-bottom:0;}
+.dfield-lbl{font-size:10.5px;color:var(--tm);margin-bottom:2px;}
+.dfield-val{font-size:12.5px;font-weight:500;}
+.dfield-val.g{color:var(--g);}
+
+.conv-card{background:#fff;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.conv-hdr{padding:10px 14px;border-bottom:1px solid var(--bd);font-size:10px;font-weight:600;color:var(--th);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center;}
+.conv-hdr span{font-weight:400;color:var(--tm);text-transform:none;font-size:11px;}
+.conv-msgs{padding:12px;display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;}
+.conv-msgs::-webkit-scrollbar{width:3px;}
+.conv-msgs::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px;}
+.cmsg{display:flex;gap:6px;}
+.cmsg.umsg{flex-direction:row-reverse;}
+.cmsg-av{width:20px;height:20px;border-radius:50%;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.bav{background:var(--gl);color:var(--g);}
+.uav{background:var(--s2);color:var(--tm);}
+.cmsg-body{max-width:78%;}
+.cmsg-bbl{padding:7px 10px;font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.bbbl{background:var(--sf);border:1px solid var(--bd);color:var(--tx);border-radius:3px 8px 8px 8px;}
+.ubbl{background:var(--g);color:#fff;border-radius:8px 3px 8px 8px;}
+.cmsg-time{font-size:9px;color:var(--th);margin-top:2px;padding:0 2px;}
+.umsg .cmsg-time{text-align:right;}
+
+/* PANELS */
+.panel-wrap{flex:1;overflow-y:auto;padding:18px;}
+.panel-wrap::-webkit-scrollbar{width:5px;}
+.panel-wrap::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+.ph{margin-bottom:16px;}
+.ph-title{font-size:17px;font-weight:600;margin-bottom:3px;}
+.ph-sub{font-size:12.5px;color:var(--tm);}
+.scards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.scard{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
+.scard-lbl{font-size:10px;font-weight:600;color:var(--th);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.scard-val{font-size:20px;font-weight:600;color:var(--tx);}
+.scard-val.g{color:var(--g);}
+.scard-val.y{color:#f59e0b;}
+.scard-sub{font-size:11px;color:var(--tm);margin-top:2px;}
+
+/* TABLE */
+.ptable-wrap{background:#fff;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.ptable-hdr{padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;}
+.ptable-title{font-size:12.5px;font-weight:600;}
+.ptable-actions{display:flex;gap:6px;}
+.pbtn{padding:5px 11px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--bd);background:#fff;color:var(--tm);font-family:'Inter',sans-serif;transition:all .15s;}
+.pbtn:hover{background:var(--sf);}
+.pbtn.pri{background:var(--g);color:#fff;border-color:var(--g);}
+.pbtn.pri:hover{background:var(--gd);}
+table{width:100%;border-collapse:collapse;}
+th{padding:8px 12px;font-size:10.5px;font-weight:600;color:var(--th);text-transform:uppercase;letter-spacing:.4px;text-align:left;background:var(--sf);border-bottom:1px solid var(--bd);}
+td{padding:10px 12px;font-size:12px;color:var(--tx);border-bottom:1px solid var(--bd);}
+tr:last-child td{border:none;}
+tr:hover td{background:var(--sf);}
+.chip{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;}
+.chip.y{background:#fef3c7;color:#92400e;}
+.chip.g{background:#d1fae5;color:#065f46;}
+.chip.b{background:#dbeafe;color:#1e40af;}
+.chip.r{background:#fee2e2;color:#991b1b;}
+
+/* REVIEW CARDS */
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.rcard{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:13px;}
+.rcard-top{display:flex;justify-content:space-between;margin-bottom:5px;}
+.rcard-name{font-size:12.5px;font-weight:600;}
+.rcard-src{font-size:10px;color:var(--th);}
+.rcard-stars{color:#f59e0b;font-size:12px;margin-bottom:5px;}
+.rcard-text{font-size:12px;color:var(--tm);line-height:1.5;margin-bottom:9px;}
+.rcard-reply{background:var(--gl);border-radius:7px;padding:9px 11px;font-size:12px;color:#1a1a1a;line-height:1.5;margin-bottom:8px;}
+.rcard-reply-lbl{font-size:10px;font-weight:600;color:var(--g);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px;}
+.rcard-actions{display:flex;gap:6px;}
+.gen-btn{padding:5px 11px;border-radius:6px;font-size:11px;font-weight:500;background:var(--gl);color:var(--g);border:1px solid rgba(26,107,74,.2);cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.gen-btn:hover{background:var(--gm);}
+.pub-btn{padding:5px 11px;border-radius:6px;font-size:11px;font-weight:500;background:var(--g);color:#fff;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.pub-btn:hover{background:var(--gd);}
+.pending-reply{background:#fff9e6;border:1px dashed #f59e0b;border-radius:7px;padding:9px 11px;font-size:12px;line-height:1.5;margin-bottom:8px;color:var(--tx);}
+.pending-lbl{font-size:10px;font-weight:600;color:#92400e;margin-bottom:3px;}
+
+/* ANALYTICS */
+.chart-card{background:#fff;border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:12px;}
+.chart-title{font-size:12.5px;font-weight:600;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.chart-title span{font-size:11px;font-weight:400;color:var(--tm);}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:100px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;background:var(--gl);border-radius:3px 3px 0 0;min-height:3px;}
+.bar:hover{background:var(--gm);}
+.bar-val{font-size:8.5px;color:var(--th);}
+.bar-lbl{font-size:8px;color:var(--tm);}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">SmileCare <span id="nl-sub">ClinicAI Admin</span></div>
+  <div class="nav-tabs">
+    <button class="ntab active" onclick="switchTab('admin',this)">
+      <span id="nt1">📋 Администратор</span>
+      <span class="nbadge" id="badge-admin">0</span>
+    </button>
+    <button class="ntab" onclick="switchTab('recalls',this)"><span id="nt2">🔔 Повторные визиты</span></button>
+    <button class="ntab" onclick="switchTab('reviews',this)"><span id="nt3">⭐ Репутация</span></button>
+    <button class="ntab" onclick="switchTab('analytics',this)"><span id="nt4">📊 Аналитика</span></button>
+  </div>
+  <div class="nav-right">
+    <button class="refresh-btn" onclick="loadBookings()" id="refresh-btn">↻ Обновить</button>
+    <div class="lang-sw">
+      <button class="active" onclick="setLang('ru',this)">RU</button>
+      <button onclick="setLang('ro',this)">RO</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ ADMIN VIEW ═══ -->
+<div class="view active" id="v-admin">
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-val g" id="st-total">0</div><div class="stat-lbl" id="stl-total">Всего записей</div></div>
+    <div class="stat-item"><div class="stat-val y" id="st-new">0</div><div class="stat-lbl" id="stl-new">Новых</div></div>
+    <div class="stat-item"><div class="stat-val gr" id="st-conf">0</div><div class="stat-lbl" id="stl-conf">Подтверждённых</div></div>
+    <div class="stat-item"><div class="stat-val m" id="st-today">0</div><div class="stat-lbl" id="stl-today">Сегодня</div></div>
+  </div>
+  <div class="admin-body">
+    <div class="sidebar">
+      <div class="sb-hdr">
+        <div class="sb-title" id="sb-title">Записи на приём</div>
+        <div class="ftabs">
+          <button class="ftab active" onclick="filterB('all',this)" id="ft-all">Все</button>
+          <button class="ftab" onclick="filterB('new',this)" id="ft-new">Новые</button>
+          <button class="ftab" onclick="filterB('confirmed',this)" id="ft-conf">Подтв.</button>
+        </div>
+        <div class="sb-search"><input type="text" id="sb-search-inp" placeholder="Поиск..." oninput="renderList()"/></div>
+      </div>
+      <div class="blist" id="blist"></div>
+    </div>
+    <div class="main" id="main">
+      <div class="empty-state" id="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <p id="es-txt">Выберите запись для просмотра</p>
+      </div>
+      <div class="detail" id="detail" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RECALLS VIEW ═══ -->
+<div class="view" id="v-recalls">
+  <div class="panel-wrap">
+    <div class="ph"><div class="ph-title" id="ph-recalls">Повторные визиты</div><div class="ph-sub" id="phs-recalls">Пациенты без визита 6+ месяцев</div></div>
+    <div class="scards">
+      <div class="scard"><div class="scard-lbl" id="rc1l">Без визита 6м+</div><div class="scard-val y">247</div><div class="scard-sub">~197 600 MDL</div></div>
+      <div class="scard"><div class="scard-lbl" id="rc2l">Напоминаний</div><div class="scard-val g">89</div><div class="scard-sub" id="rc2s">за 30 дней</div></div>
+      <div class="scard"><div class="scard-lbl" id="rc3l">Вернулись</div><div class="scard-val g">34</div><div class="scard-sub" id="rc3s">конверсия 38%</div></div>
+      <div class="scard"><div class="scard-lbl" id="rc4l">Выручка возврата</div><div class="scard-val g">27 200 MDL</div><div class="scard-sub" id="rc4s">за месяц</div></div>
+    </div>
+    <div class="ptable-wrap">
+      <div class="ptable-hdr">
+        <div class="ptable-title" id="pt-title">Список пациентов</div>
+        <div class="ptable-actions">
+          <button class="pbtn" id="btn-filter-rc">Фильтр</button>
+          <button class="pbtn pri" id="btn-send-all">Отправить всем</button>
+        </div>
+      </div>
+      <table><thead><tr>
+        <th id="th-name">Пациент</th><th id="th-visit">Последний визит</th>
+        <th id="th-service">Услуга</th><th id="th-contact">Контакт</th>
+        <th id="th-status">Статус</th><th></th>
+      </tr></thead><tbody>
+        <tr><td>Иванова Мария</td><td>14 ноя 2024</td><td>Чистка</td><td>+373 69 123 456</td><td><span class="chip y" id="ns1">Не отправлено</span></td><td><button class="pbtn pri" style="padding:3px 9px;font-size:11px;" id="btn-send1">Отправить</button></td></tr>
+        <tr><td>Popescu Alexandru</td><td>3 окт 2024</td><td>Имплант</td><td>+373 79 234 567</td><td><span class="chip b" id="ns2">Отправлено</span></td><td><button class="pbtn" style="padding:3px 9px;font-size:11px;" id="btn-resend1">Повторно</button></td></tr>
+        <tr><td>Константинова Елена</td><td>28 сен 2024</td><td>Кариес</td><td>+373 60 345 678</td><td><span class="chip g" id="ns3">Записалась</span></td><td><span style="font-size:11px;color:var(--tm);" id="ns3t">✓ Записана</span></td></tr>
+        <tr><td>Rusu Ion</td><td>15 авг 2024</td><td>Брекеты</td><td>+373 78 456 789</td><td><span class="chip y">Не отправлено</span></td><td><button class="pbtn pri" style="padding:3px 9px;font-size:11px;">Отправить</button></td></tr>
+        <tr><td>Grigoreva Anna</td><td>2 авг 2024</td><td>Чистка</td><td>+373 69 567 890</td><td><span class="chip r" id="ns5">Отказ</span></td><td><button class="pbtn" style="padding:3px 9px;font-size:11px;" id="ns5t">Попробовать</button></td></tr>
+        <tr><td>Морару Дмитрий</td><td>1 июл 2024</td><td>Отбеливание</td><td>+373 60 678 901</td><td><span class="chip y">Не отправлено</span></td><td><button class="pbtn pri" style="padding:3px 9px;font-size:11px;">Отправить</button></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REVIEWS VIEW ═══ -->
+<div class="view" id="v-reviews">
+  <div class="panel-wrap">
+    <div class="ph"><div class="ph-title" id="ph-reviews">Репутация</div><div class="ph-sub" id="phs-reviews">AI мониторит отзывы Google и генерирует ответы в стиле клиники</div></div>
+    <div class="scards">
+      <div class="scard"><div class="scard-lbl" id="rv1l">Рейтинг Google</div><div class="scard-val g">4.8 ⭐</div><div class="scard-sub" id="rv1s">↑ +0.2 за 3 месяца</div></div>
+      <div class="scard"><div class="scard-lbl" id="rv2l">Обработано</div><div class="scard-val g">156</div><div class="scard-sub" id="rv2s">за всё время</div></div>
+      <div class="scard"><div class="scard-lbl" id="rv3l">Ответов AI</div><div class="scard-val g">142</div><div class="scard-sub" id="rv3s">91% охват</div></div>
+      <div class="scard"><div class="scard-lbl" id="rv4l">Новых (неделя)</div><div class="scard-val y">4</div><div class="scard-sub" id="rv4s">ждут ответа</div></div>
+    </div>
+    <div class="review-grid" id="review-grid"></div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS VIEW ═══ -->
+<div class="view" id="v-analytics">
+  <div class="panel-wrap">
+    <div class="ph"><div class="ph-title" id="ph-analytics">Аналитика</div><div class="ph-sub" id="phs-analytics">Статистика AI-администратора за 30 дней</div></div>
+    <div class="scards">
+      <div class="scard"><div class="scard-lbl" id="an1l">Диалогов</div><div class="scard-val g">284</div><div class="scard-sub" id="an1s">↑ +23% к прошлому месяцу</div></div>
+      <div class="scard"><div class="scard-lbl" id="an2l">Решено AI</div><div class="scard-val g">91%</div><div class="scard-sub" id="an2s">без участия оператора</div></div>
+      <div class="scard"><div class="scard-lbl" id="an3l">Записей создано</div><div class="scard-val g">67</div><div class="scard-sub" id="an3s">конверсия 23.6%</div></div>
+      <div class="scard"><div class="scard-lbl" id="an4l">Время ответа</div><div class="scard-val g">2.3с</div><div class="scard-sub" id="an4s">24/7 без выходных</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="chart-card">
+        <div class="chart-title"><span id="ch1t">Обращения по часам</span><span id="ch1s">сегодня</span></div>
+        <div class="bar-chart" id="hour-chart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title"><span id="ch2t">Источники диалогов</span><span id="ch2s">30 дней</span></div>
+        <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px;" id="src-chart"></div>
+      </div>
+    </div>
+    <div class="ptable-wrap">
+      <div class="ptable-hdr"><div class="ptable-title" id="pt-top">Топ услуг</div></div>
+      <table><thead><tr><th id="th-svc2">Услуга</th><th id="th-cnt">Запросов</th><th id="th-conv2">Конверсия</th><th id="th-rev">Выручка</th></tr></thead>
+      <tbody>
+        <tr><td id="an-s1">Профессиональная чистка</td><td>89</td><td><span class="chip g">31%</span></td><td>22 400 MDL</td></tr>
+        <tr><td id="an-s2">Лечение кариеса</td><td>67</td><td><span class="chip g">28%</span></td><td>37 800 MDL</td></tr>
+        <tr><td id="an-s3">Имплант</td><td>34</td><td><span class="chip y">18%</span></td><td>74 400 MDL</td></tr>
+        <tr><td id="an-s4">Консультация</td><td>28</td><td><span class="chip g">42%</span></td><td>6 300 MDL</td></tr>
+        <tr><td id="an-s5">Отбеливание</td><td>19</td><td><span class="chip y">21%</span></td><td>9 975 MDL</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ TRANSLATIONS ═══
+const TR = {
+  ru: {
+    nlSub:'ClinicAI Admin',
+    nt:['📋 Администратор','🔔 Повторные визиты','⭐ Репутация','📊 Аналитика'],
+    refresh:'↻ Обновить',
+    sbTitle:'Записи на приём', ftAll:'Все', ftNew:'Новые', ftConf:'Подтв.',
+    stLbls:['Всего записей','Новых','Подтверждённых','Сегодня'],
+    esTxt:'Выберите запись для просмотра', search:'Поиск...',
+    dBook:'Данные записи', dPat:'Пациент',
+    fldSvc:'Услуга', fldTime:'Дата и время', fldStatus:'Статус',
+    fldName:'Имя', fldPhone:'Телефон', fldLang:'Язык', fldCh:'Канал',
+    sNew:'Новый', sConf:'Подтверждён', sCanc:'Отменён',
+    btnConf:'✓ Подтвердить', btnCanc:'Отменить', btnRestore:'↩ Восстановить',
+    convHdr:'История разговора', msgs:'сообщений',
+    chWidget:'💬 Виджет', chWA:'📱 WhatsApp',
+    langRu:'Русский', langRo:'Română',
+    // Recalls
+    phRecalls:'Повторные визиты', phsRecalls:'Пациенты без визита 6+ месяцев',
+    rc1:'Без визита 6м+', rc2:'Напоминаний', rc2s:'за 30 дней',
+    rc3:'Вернулись', rc3s:'конверсия 38%', rc4:'Выручка возврата', rc4s:'за месяц',
+    ptTitle:'Список пациентов', btnFilter:'Фильтр', btnSendAll:'Отправить всем',
+    thName:'Пациент', thVisit:'Последний визит', thSvc:'Услуга', thContact:'Контакт', thStatus:'Статус',
+    ns1:'Не отправлено', ns2:'Отправлено', ns3:'Записалась', ns5:'Отказ',
+    btnSend:'Отправить', btnResend:'Повторно', ns5t:'Попробовать', ns3t:'✓ Записана',
+    // Reviews
+    phReviews:'Репутация', phsReviews:'AI мониторит отзывы Google и генерирует ответы в стиле клиники',
+    rv1:'Рейтинг Google', rv1s:'↑ +0.2 за 3 месяца',
+    rv2:'Обработано', rv2s:'за всё время',
+    rv3:'Ответов AI', rv3s:'91% охват',
+    rv4:'Новых (неделя)', rv4s:'ждут ответа',
+    btnGen:'✨ Сгенерировать ответ', btnRegen:'↻ Перегенерировать', btnPub:'✓ Опубликовать',
+    genLbl:'Ответ клиники · AI (черновик)', pubLbl:'Ответ клиники · AI',
+    genLoading:'⏳ Генерирую...', genRetry:'✨ Попробовать снова',
+    // Analytics
+    phAnalytics:'Аналитика', phsAnalytics:'Статистика AI-администратора за 30 дней',
+    an1:'Диалогов', an1s:'↑ +23% к прошлому месяцу',
+    an2:'Решено AI', an2s:'без участия оператора',
+    an3:'Записей создано', an3s:'конверсия 23.6%',
+    an4:'Время ответа', an4s:'24/7 без выходных',
+    ch1t:'Обращения по часам', ch1s:'сегодня',
+    ch2t:'Источники диалогов', ch2s:'30 дней',
+    ptTop:'Топ услуг',
+    thSvc2:'Услуга', thCnt:'Запросов', thConv:'Конверсия', thRev:'Выручка',
+    anS:['Профессиональная чистка','Лечение кариеса','Имплант','Консультация','Отбеливание'],
+    srcLabels:['💬 Виджет сайта','📱 WhatsApp','📞 Телефон','📧 Email'],
+  },
+  ro: {
+    nlSub:'ClinicAI Admin',
+    nt:['📋 Administrator','🔔 Vizite repetate','⭐ Reputație','📊 Analitica'],
+    refresh:'↻ Actualizare',
+    sbTitle:'Programări', ftAll:'Toate', ftNew:'Noi', ftConf:'Conf.',
+    stLbls:['Total programări','Noi','Confirmate','Astăzi'],
+    esTxt:'Selectați o programare', search:'Căutare...',
+    dBook:'Detalii programare', dPat:'Pacient',
+    fldSvc:'Serviciu', fldTime:'Data și ora', fldStatus:'Status',
+    fldName:'Nume', fldPhone:'Telefon', fldLang:'Limbă', fldCh:'Canal',
+    sNew:'Nou', sConf:'Confirmat', sCanc:'Anulat',
+    btnConf:'✓ Confirmă', btnCanc:'Anulează', btnRestore:'↩ Restaurează',
+    convHdr:'Istoricul conversației', msgs:'mesaje',
+    chWidget:'💬 Widget', chWA:'📱 WhatsApp',
+    langRu:'Rusă', langRo:'Română',
+    phRecalls:'Vizite repetate', phsRecalls:'Pacienți fără vizită 6+ luni',
+    rc1:'Fără vizită 6l+', rc2:'Memento-uri', rc2s:'în 30 zile',
+    rc3:'Reveniți', rc3s:'conversie 38%', rc4:'Venit retur', rc4s:'pe lună',
+    ptTitle:'Lista pacienților', btnFilter:'Filtru', btnSendAll:'Trimite tuturor',
+    thName:'Pacient', thVisit:'Ultima vizită', thSvc:'Serviciu', thContact:'Contact', thStatus:'Status',
+    ns1:'Netrimis', ns2:'Trimis', ns3:'Programată', ns5:'Refuz',
+    btnSend:'Trimite', btnResend:'Retrimite', ns5t:'Încearcă', ns3t:'✓ Programată',
+    phReviews:'Reputație', phsReviews:'AI monitorizează recenziile Google și generează răspunsuri',
+    rv1:'Rating Google', rv1s:'↑ +0.2 în 3 luni',
+    rv2:'Procesate', rv2s:'total',
+    rv3:'Răspunsuri AI', rv3s:'91% acoperire',
+    rv4:'Noi (săptămână)', rv4s:'așteaptă răspuns',
+    btnGen:'✨ Generează răspuns', btnRegen:'↻ Regenerează', btnPub:'✓ Publică',
+    genLbl:'Răspuns clinică · AI (ciornă)', pubLbl:'Răspuns clinică · AI',
+    genLoading:'⏳ Generez...', genRetry:'✨ Încearcă din nou',
+    phAnalytics:'Analitica', phsAnalytics:'Statistici administrator AI — 30 zile',
+    an1:'Dialoguri', an1s:'↑ +23% față de luna trecută',
+    an2:'Rezolvate AI', an2s:'fără operator',
+    an3:'Programări create', an3s:'conversie 23.6%',
+    an4:'Timp răspuns', an4s:'24/7 fără pauze',
+    ch1t:'Solicitări pe ore', ch1s:'astăzi',
+    ch2t:'Surse dialoguri', ch2s:'30 zile',
+    ptTop:'Top servicii',
+    thSvc2:'Serviciu', thCnt:'Solicitări', thConv:'Conversie', thRev:'Venit',
+    anS:['Igienizare profesională','Tratament carie','Implant','Consultație','Albire'],
+    srcLabels:['💬 Widget site','📱 WhatsApp','📞 Telefon','📧 Email'],
+  }
+};
+
+let uiLang = 'ru';
+
+function t(key) { return TR[uiLang][key] || TR.ru[key] || key; }
+
+function setLang(l, btn) {
+  uiLang = l;
+  document.querySelectorAll('.lang-sw button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyTr();
+  renderList();
+  if (currentId) showDetail(currentId);
+  renderReviews();
+}
+
+function applyTr() {
+  const tr = TR[uiLang];
+  // Nav
+  document.getElementById('nl-sub').textContent = tr.nlSub;
+  ['nt1','nt2','nt3','nt4'].forEach((id,i) => { const el=document.getElementById(id); if(el) el.textContent=tr.nt[i]; });
+  document.getElementById('refresh-btn').textContent = tr.refresh;
+  // Admin
+  document.getElementById('sb-title').textContent = tr.sbTitle;
+  document.getElementById('ft-all').textContent = tr.ftAll;
+  document.getElementById('ft-new').textContent = tr.ftNew;
+  document.getElementById('ft-conf').textContent = tr.ftConf;
+  document.getElementById('sb-search-inp').placeholder = tr.search;
+  ['stl-total','stl-new','stl-conf','stl-today'].forEach((id,i) => { const el=document.getElementById(id); if(el) el.textContent=tr.stLbls[i]; });
+  document.getElementById('es-txt').textContent = tr.esTxt;
+  // Recalls
+  const rcMap = {
+    'ph-recalls':tr.phRecalls,'phs-recalls':tr.phsRecalls,
+    'rc1l':tr.rc1,'rc2l':tr.rc2,'rc2s':tr.rc2s,'rc3l':tr.rc3,'rc3s':tr.rc3s,'rc4l':tr.rc4,'rc4s':tr.rc4s,
+    'pt-title':tr.ptTitle,'btn-filter-rc':tr.btnFilter,'btn-send-all':tr.btnSendAll,
+    'th-name':tr.thName,'th-visit':tr.thVisit,'th-service':tr.thSvc,'th-contact':tr.thContact,'th-status':tr.thStatus,
+    'ns1':tr.ns1,'ns2':tr.ns2,'ns3':tr.ns3,'ns5':tr.ns5,
+    'btn-send1':tr.btnSend,'btn-resend1':tr.btnResend,'ns5t':tr.ns5t,'ns3t':tr.ns3t,
+  };
+  Object.entries(rcMap).forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.textContent=val; });
+  // Reviews
+  const rvMap = {
+    'ph-reviews':tr.phReviews,'phs-reviews':tr.phsReviews,
+    'rv1l':tr.rv1,'rv1s':tr.rv1s,'rv2l':tr.rv2,'rv2s':tr.rv2s,
+    'rv3l':tr.rv3,'rv3s':tr.rv3s,'rv4l':tr.rv4,'rv4s':tr.rv4s,
+  };
+  Object.entries(rvMap).forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.textContent=val; });
+  // Analytics
+  const anMap = {
+    'ph-analytics':tr.phAnalytics,'phs-analytics':tr.phsAnalytics,
+    'an1l':tr.an1,'an1s':tr.an1s,'an2l':tr.an2,'an2s':tr.an2s,
+    'an3l':tr.an3,'an3s':tr.an3s,'an4l':tr.an4,'an4s':tr.an4s,
+    'ch1t':tr.ch1t,'ch1s':tr.ch1s,'ch2t':tr.ch2t,'ch2s':tr.ch2s,
+    'pt-top':tr.ptTop,'th-svc2':tr.thSvc2,'th-cnt':tr.thCnt,'th-conv2':tr.thConv,'th-rev':tr.thRev,
+  };
+  Object.entries(anMap).forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.textContent=val; });
+  ['an-s1','an-s2','an-s3','an-s4','an-s5'].forEach((id,i) => { const el=document.getElementById(id); if(el) el.textContent=tr.anS[i]; });
+}
+
+// ═══ TAB SWITCHING ═══
+function switchTab(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
+  document.getElementById('v-'+name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'analytics') renderCharts();
+  if (name === 'reviews') renderReviews();
+}
+
+// ═══ BOOKINGS ═══
+const DEMO = [
+  { id:'d1', name:'Мария Иванова', phone:'+373 69 123 456', service:'Профессиональная чистка', time:'Пятница 16:00', status:'new', channel:'widget', lang:'ru', createdAt:new Date(Date.now()-8*60000),
+    conversation:[
+      {role:'bot',text:'Добрый день! Я Diana, ассистент SmileCare 🦷\n\nЧем могу помочь?',time:'14:52'},
+      {role:'usr',text:'Хочу записаться на чистку зубов',time:'14:53'},
+      {role:'bot',text:'**Профессиональная чистка** стоит **800 MDL**, около часа. Принимает Dr. Marina Cebotari.\n\nКакой день удобен?',time:'14:53'},
+      {role:'usr',text:'Пятница в 16:00',time:'14:54'},
+      {role:'bot',text:'Скажите ваше имя и номер телефона.',time:'14:54'},
+      {role:'usr',text:'Мария Иванова, +373 69 123 456',time:'14:55'},
+      {role:'bot',text:'Мария, записала вас на **пятницу в 16:00**. До встречи в SmileCare! 🦷',time:'14:55'}
+    ]
+  },
+  { id:'d2', name:'Alexandru Popescu', phone:'+373 79 234 567', service:'Consultație implant', time:'Joi 11:00', status:'confirmed', channel:'whatsapp', lang:'ro', createdAt:new Date(Date.now()-35*60000),
+    conversation:[
+      {role:'bot',text:'Bună ziua! Sunt Diana, asistentul SmileCare 🦷',time:'14:20'},
+      {role:'usr',text:'Vreau informații despre implant dentar',time:'14:21'},
+      {role:'bot',text:'**Implantul dentar** de la **12 000 MDL**. Dr. Andrei Lungu — mar/joi 10-19.\n\nVă convine joi la 11:00?',time:'14:21'},
+      {role:'usr',text:'Da. Alexandru Popescu, 079234567',time:'14:22'},
+      {role:'bot',text:'Alexandru, **joi la 11:00** cu Dr. Andrei Lungu. Ne vedem! 🦷',time:'14:23'}
+    ]
+  },
+  { id:'d3', name:'Елена Константинова', phone:'+373 60 345 678', service:'Лечение кариеса', time:'Среда 10:30', status:'new', channel:'widget', lang:'ru', createdAt:new Date(Date.now()-2*3600000),
+    conversation:[
+      {role:'bot',text:'Добрый день! Я Diana, ассистент SmileCare.',time:'12:55'},
+      {role:'usr',text:'Болит зуб уже 3 дня',time:'12:56'},
+      {role:'bot',text:'Dr. Marina Cebotari — среда 10:30.\n\n- Кариес: **600-1200 MDL**\n- Длительность: ~1 час\n\nПодходит?',time:'12:56'},
+      {role:'usr',text:'Да! Елена Константинова, +373 60 345 678',time:'12:57'},
+      {role:'bot',text:'Елена, **среда 10:30**. Держитесь! 🦷',time:'12:57'}
+    ]
+  }
+];
+
+let allBookings = [];
+let currentFilter = 'all';
+let currentId = null;
+
+function loadBookings() {
+  let stored = [];
+  try {
+    stored = JSON.parse(localStorage.getItem('smilecare_bookings') || '[]');
+    stored = stored.map(b => ({...b, createdAt: new Date(b.createdAt)}));
+  } catch(e) {}
+  // Merge: stored first, then demo entries not overridden by stored
+  const storedIds = new Set(stored.map(b => b.id));
+  const demoFiltered = DEMO.map(b => ({...b})).filter(b => !storedIds.has(b.id));
+  allBookings = [...stored, ...demoFiltered];
+  updateStats();
+  renderList();
+  document.getElementById('refresh-btn').textContent = TR[uiLang].refresh;
+}
+
+function updateStats() {
+  const tr = TR[uiLang];
+  document.getElementById('st-total').textContent = allBookings.length;
+  document.getElementById('st-new').textContent   = allBookings.filter(b=>b.status==='new').length;
+  document.getElementById('st-conf').textContent  = allBookings.filter(b=>b.status==='confirmed').length;
+  const today = new Date().toDateString();
+  document.getElementById('st-today').textContent = allBookings.filter(b=>new Date(b.createdAt).toDateString()===today).length;
+  document.getElementById('badge-admin').textContent = allBookings.filter(b=>b.status==='new').length;
+}
+
+function filterB(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function timeAgo(date) {
+  const mins = Math.round((Date.now() - new Date(date)) / 60000);
+  if (mins < 60) return `${mins} мин`;
+  if (mins < 1440) return `${Math.round(mins/60)} ч`;
+  return `${Math.round(mins/1440)} д`;
+}
+
+function renderList() {
+  const tr  = TR[uiLang];
+  const q   = (document.getElementById('sb-search-inp').value || '').toLowerCase();
+  const list = document.getElementById('blist');
+  let filtered = currentFilter === 'all' ? allBookings : allBookings.filter(b => b.status === currentFilter);
+  if (q) filtered = filtered.filter(b => b.name.toLowerCase().includes(q) || b.service.toLowerCase().includes(q));
+
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:24px 12px;text-align:center;color:var(--th);font-size:12px;">Нет записей</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  filtered.forEach(b => {
+    const el  = document.createElement('div');
+    el.className = 'bitem' + (b.id === currentId ? ' active' : '');
+    const sLabel = {new:tr.sNew, confirmed:tr.sConf, cancelled:tr.sCanc}[b.status] || b.status;
+    const sClass = {new:'s-new', confirmed:'s-conf', cancelled:'s-canc'}[b.status] || 's-new';
+    const chIcon = b.channel === 'whatsapp' ? tr.chWA : tr.chWidget;
+    el.innerHTML = `
+      <div class="bitem-top">
+        <span class="bitem-name">${b.name}</span>
+        <span class="bitem-time">${timeAgo(b.createdAt)}</span>
+      </div>
+      <div class="bitem-svc">${b.service} · ${b.time}</div>
+      <div class="bitem-bot">
+        <span class="sbadge ${sClass}">${sLabel}</span>
+        <span class="bitem-ch">${chIcon} · ${b.lang==='ro'?'🇷🇴':'🇷🇺'}</span>
+      </div>`;
+    el.onclick = () => showDetail(b.id);
+    list.appendChild(el);
+  });
+}
+
+function renderMd(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^- (.+)/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, s => '<ul style="margin:4px 0 4px 14px">'+s+'</ul>')
+    .replace(/\n/g,'<br>');
+}
+
+function showDetail(id) {
+  currentId = id;
+  renderList();
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  const tr = TR[uiLang];
+  document.getElementById('empty-state').style.display = 'none';
+  const det = document.getElementById('detail');
+  det.style.display = 'block';
+
+  const initials  = b.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const sLabel    = {new:tr.sNew, confirmed:tr.sConf, cancelled:tr.sCanc}[b.status] || b.status;
+  const sClass    = {new:'s-new', confirmed:'s-conf', cancelled:'s-canc'}[b.status] || 's-new';
+  const chIcon    = b.channel === 'whatsapp' ? tr.chWA : tr.chWidget;
+
+  const conv = b.conversation || [];
+  const convHtml = conv.length > 0
+    ? conv.map(m => {
+        const isBot = m.role === 'bot';
+        return `<div class="cmsg ${!isBot?'umsg':''}">
+          <div class="cmsg-av ${isBot?'bav':'uav'}">${isBot?'D':'П'}</div>
+          <div class="cmsg-body">
+            <div class="cmsg-bbl ${isBot?'bbbl':'ubbl'}">${isBot?renderMd(m.text):m.text}</div>
+            <div class="cmsg-time">${m.time||''}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : `<div style="padding:16px;text-align:center;color:var(--th);font-size:12px;">Нет сообщений</div>`;
+
+  // Action buttons based on status
+  let actionBtns = '';
+  if (b.status === 'new') {
+    actionBtns += `<button class="abtn pri" onclick="changeStatus('${b.id}','confirmed')">${tr.btnConf}</button>`;
+    actionBtns += `<button class="abtn dan" onclick="changeStatus('${b.id}','cancelled')">${tr.btnCanc}</button>`;
+  } else if (b.status === 'confirmed') {
+    actionBtns += `<button class="abtn dan" onclick="changeStatus('${b.id}','cancelled')">${tr.btnCanc}</button>`;
+  } else if (b.status === 'cancelled') {
+    actionBtns += `<button class="abtn pri" onclick="changeStatus('${b.id}','confirmed')">${tr.btnConf}</button>`;
+    actionBtns += `<button class="abtn sec" onclick="changeStatus('${b.id}','new')">${tr.btnRestore}</button>`;
+  }
+
+  det.innerHTML = `
+    <div class="d-header">
+      <div class="d-av">${initials}</div>
+      <div style="flex:1">
+        <div class="d-name">${b.name}</div>
+        <div class="d-meta">
+          <span>📞 ${b.phone}</span>
+          <span>🕐 ${timeAgo(b.createdAt)}</span>
+          <span>${chIcon}</span>
+          <span>${b.lang==='ro'?'🇷🇴 Română':'🇷🇺 Русский'}</span>
+          <span class="sbadge ${sClass}">${sLabel}</span>
+        </div>
+      </div>
+      <div class="d-actions">${actionBtns}</div>
+    </div>
+    <div class="d-grid">
+      <div class="dcard">
+        <div class="dcard-ttl">${tr.dBook}</div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldSvc}</div><div class="dfield-val g">${b.service}</div></div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldTime}</div><div class="dfield-val">${b.time}</div></div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldStatus}</div><div class="dfield-val"><span class="sbadge ${sClass}">${sLabel}</span></div></div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldCh}</div><div class="dfield-val">${chIcon}</div></div>
+      </div>
+      <div class="dcard">
+        <div class="dcard-ttl">${tr.dPat}</div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldName}</div><div class="dfield-val">${b.name}</div></div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldPhone}</div><div class="dfield-val">${b.phone}</div></div>
+        <div class="dfield"><div class="dfield-lbl">${tr.fldLang}</div><div class="dfield-val">${b.lang==='ro'?'Română':'Русский'}</div></div>
+      </div>
+    </div>
+    <div class="conv-card">
+      <div class="conv-hdr">${tr.convHdr} <span>${conv.length} ${tr.msgs}</span></div>
+      <div class="conv-msgs">${convHtml}</div>
+    </div>`;
+}
+
+window.changeStatus = function(id, status) {
+  const b = allBookings.find(x => x.id === id);
+  if (!b) return;
+  b.status = status;
+  try {
+    const s = JSON.parse(localStorage.getItem('smilecare_bookings') || '[]');
+    const i = s.findIndex(x => x.id === id);
+    if (i >= 0) { s[i].status = status; localStorage.setItem('smilecare_bookings', JSON.stringify(s)); }
+  } catch(e) {}
+  updateStats(); renderList(); showDetail(id);
+};
+
+// ═══ REVIEWS ═══
+const REVIEWS = [
+  { id:'r1', name:'Татьяна Ф.', src:'Google Maps · 2 дня назад', stars:5,
+    text:'Прекрасная клиника! Доктор Полеску — просто волшебник. Боялась лечить зуб мудрости, но всё прошло быстро и безболезненно. Персонал очень приятный. Буду рекомендовать всем!',
+    reply:'Татьяна, большое спасибо за тёплый отзыв! Очень рады, что визит прошёл комфортно. Ждём вас снова в SmileCare!', published:true },
+  { id:'r2', name:'Elena R.', src:'Google Maps · сегодня', stars:5,
+    text:'Prima dată la ClinicAI — impresii foarte bune. Echipament modern, spațiu curat, personal prietenos. M-am programat deja pentru luna viitoare!',
+    reply:null, published:false },
+  { id:'r3', name:'Андрей В.', src:'Google Maps · 5 дней назад', stars:4,
+    text:'Хорошая клиника, современное оборудование. Единственный минус — пришлось подождать 15 минут сверх назначенного времени. В целом доволен лечением.',
+    reply:null, published:false },
+  { id:'r4', name:'Maria C.', src:'Google Maps · неделю назад', stars:5,
+    text:'Recomand cu căldură! Dr. Munteanu este foarte profesionistă și atentă. Prețurile sunt corecte față de calitate.',
+    reply:null, published:false },
+];
+
+function renderReviews() {
+  const tr  = TR[uiLang];
+  const grid = document.getElementById('review-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  REVIEWS.forEach(r => {
+    const stars = '★'.repeat(r.stars) + '☆'.repeat(5-r.stars);
+    let replyHtml = '';
+    if (r.published && r.reply) {
+      replyHtml = `<div class="rcard-reply"><div class="rcard-reply-lbl">${tr.pubLbl}</div>${r.reply}</div>
+        <div class="rcard-actions">
+          <button class="gen-btn" onclick="regenReply('${r.id}',this)">${tr.btnRegen}</button>
+        </div>`;
+    } else if (!r.published && r.reply) {
+      replyHtml = `<div class="pending-reply"><div class="pending-lbl">${tr.genLbl}</div>${r.reply}</div>
+        <div class="rcard-actions">
+          <button class="pub-btn" onclick="publishReply('${r.id}')">${tr.btnPub}</button>
+          <button class="gen-btn" onclick="regenReply('${r.id}',this)">${tr.btnRegen}</button>
+        </div>`;
+    } else {
+      replyHtml = `<div class="rcard-actions"><button class="gen-btn" onclick="genReply('${r.id}',this)">${tr.btnGen}</button></div>`;
+    }
+    const card = document.createElement('div');
+    card.className = 'rcard';
+    card.id = 'rcard-'+r.id;
+    card.innerHTML = `
+      <div class="rcard-top">
+        <div><div class="rcard-name">${r.name}</div><div class="rcard-src">${r.src}</div></div>
+      </div>
+      <div class="rcard-stars">${stars}</div>
+      <div class="rcard-text">${r.text}</div>
+      ${replyHtml}`;
+    grid.appendChild(card);
+  });
+}
+
+async function callAI(prompt) {
+  const res = await fetch('https://smilecare-proxy.badmvx7.workers.dev', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{ role:'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
+async function genReply(id, btn) {
+  const tr = TR[uiLang];
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) return;
+  btn.textContent = tr.genLoading;
+  btn.disabled = true;
+  try {
+    const reply = await callAI(`Ты — управляющий стоматологической клиники SmileCare в Кишинёве. Напиши короткий (2-3 предложения) профессиональный и тёплый ответ на отзыв пациента на Google Maps. Отвечай на том же языке что и отзыв.\n\nОтзыв: "${r.text}"`);
+    r.reply = reply;
+    r.published = false;
+    renderReviews();
+  } catch(e) {
+    btn.textContent = tr.genRetry;
+    btn.disabled = false;
+  }
+}
+
+async function regenReply(id, btn) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (!r) return;
+  r.reply = null; r.published = false;
+  renderReviews();
+  const newBtn = document.querySelector(`#rcard-${id} .gen-btn`);
+  if (newBtn) await genReply(id, newBtn);
+}
+
+function publishReply(id) {
+  const r = REVIEWS.find(x => x.id === id);
+  if (r) { r.published = true; renderReviews(); }
+}
+
+// ═══ ANALYTICS CHARTS ═══
+function renderCharts() {
+  const hc = document.getElementById('hour-chart');
+  if (hc && !hc.dataset.rendered) {
+    hc.dataset.rendered = '1';
+    const data = [0,0,1,0,0,2,4,8,12,15,18,14,10,16,20,18,22,19,14,10,8,6,3,1];
+    const max  = Math.max(...data);
+    data.forEach((v, i) => {
+      const w = document.createElement('div');
+      w.className = 'bar-wrap';
+      const pct = max > 0 ? Math.round((v/max)*100) : 0;
+      w.innerHTML = `<div class="bar-val">${v||''}</div><div class="bar" style="height:${Math.max(pct,3)}%"></div><div class="bar-lbl">${i}</div>`;
+      hc.appendChild(w);
+    });
+  }
+  const sc = document.getElementById('src-chart');
+  if (sc && !sc.dataset.rendered) {
+    sc.dataset.rendered = '1';
+    const srcs = [['148','52%'],['89','31%'],['32','11%'],['15','5%']];
+    const labels = TR[uiLang].srcLabels;
+    srcs.forEach(([cnt, pct], i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:11.5px;';
+      row.innerHTML = `<span style="width:120px;color:var(--tx)">${labels[i]}</span>
+        <div style="flex:1;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;">
+          <div style="width:${pct};height:100%;background:var(--g);border-radius:3px;"></div>
+        </div>
+        <span style="color:var(--tm);min-width:50px;text-align:right">${cnt} (${pct})</span>`;
+      sc.appendChild(row);
+    });
+  }
+}
+
+// ═══ INIT ═══
+applyTr();
+loadBookings();
+setInterval(loadBookings, 30000);
+</script>
+</body>
+</html>

@@ -879,7 +879,7 @@ function showDetail(id){
   const sClass={new:'s-new',confirmed:'s-conf',cancelled:'s-canc',dialog:'s-dlg'}[b.status]||'s-dlg';
   const chIcon=b.channel==='whatsapp'?tr.chWA:tr.chWidget;
   const conv=b.conversation||[];
-  const convHtml=conv.length>0?conv.map(m=>{
+  const convHtml=conv.length>0?conv.slice().reverse().map(m=>{
     const isBot=m.role==='bot';
     const isOp=m.role==='operator';
     if(isOp){
@@ -938,7 +938,7 @@ function showDetail(id){
   },0);
 
   // Scroll to bottom
-  setTimeout(()=>{ const cm=document.getElementById('conv-msgs-'+id); if(cm) cm.scrollTop=cm.scrollHeight; },60);
+  setTimeout(()=>{ const cm=document.getElementById('conv-msgs-'+id); if(cm) cm.scrollTop=0; },60);
 }
 
 window.sendOperatorMsg=function(id){
@@ -1171,7 +1171,7 @@ function exportChat(id){
   lines.push(tr.fldCh + ': ' + (b.channel==='whatsapp'?tr.chWA:tr.chWidget));
   lines.push('─'.repeat(40));
   (b.conversation||[]).forEach(m=>{
-    const who=m.role==='bot'?'Diana AI':'Пациент / Pacient';
+    const who=m.role==='bot'?'Diana AI':m.role==='operator'?'Администратор':'Пациент / Pacient';
     lines.push('[' + (m.time||'') + '] ' + who + ':');
     lines.push(m.text||'');
     lines.push('');

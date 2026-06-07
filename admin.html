@@ -938,19 +938,31 @@ window.sendOperatorMsg=function(id){
   if(!b.conversation) b.conversation=[];
   const now=new Date();
   const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  b.conversation.push({role:'operator',text,time:timeStr});
-  // Persist to localStorage if it's a real booking
+  const opMsg={role:'operator',text,time:timeStr};
+  b.conversation.push(opMsg);
+  _lastOperatorSend = Date.now(); // блокируем автообновление на 2 сек
+
+  // Сохраняем в smilecare_bookings если это запись
   try{
     const s=JSON.parse(localStorage.getItem('smilecare_bookings')||'[]');
     const i=s.findIndex(x=>x.id===id);
     if(i>=0){s[i].conversation=b.conversation;localStorage.setItem('smilecare_bookings',JSON.stringify(s));}
   }catch(e){}
-  // Also try dialogs
+
+  // Сохраняем в smilecare_dialogs если это диалог (dlg_sess_XXX)
   try{
     const raw=JSON.parse(localStorage.getItem('smilecare_dialogs')||'[]');
-    const di=raw.findIndex(x=>('dlg_'+x.sessionId)===id);
-    if(di>=0){raw[di].conversation=b.conversation;localStorage.setItem('smilecare_dialogs',JSON.stringify(raw));}
+    // id = 'dlg_sess_XXX', sessionId = 'sess_XXX'
+    const sessionId = id.startsWith('dlg_') ? id.slice(4) : null;
+    if(sessionId){
+      const di=raw.findIndex(x=>x.sessionId===sessionId);
+      if(di>=0){
+        raw[di].conversation=b.conversation;
+        localStorage.setItem('smilecare_dialogs',JSON.stringify(raw));
+      }
+    }
   }catch(e){}
+
   inp.value='';
   showDetail(id);
 };
@@ -1336,14 +1348,23 @@ function renderReturnChart(){
 applyTr();
 resetPatients();
 loadBookings();
+
+// Timestamp последней отправки оператора — не перерисовываем сразу после неё
+let _lastOperatorSend = 0;
+
 setInterval(() => {
-  // Don't reload if user is typing in operator input
+  // Не обновляем если печатаем в поле оператора
   if (document.querySelector('.operator-input-row textarea:focus')) return;
+  // Не перерисовываем 2 сек после отправки оператора (даём localStorage записаться)
+  if (Date.now() - _lastOperatorSend < 2000) return;
+
   const prevId = currentId;
   const cm = prevId ? document.getElementById('conv-msgs-' + prevId) : null;
-  const atBottom = cm ? (cm.scrollHeight - cm.scrollTop - cm.clientHeight < 50) : true;
+  const atBottom = !cm || (cm.scrollHeight - cm.scrollTop - cm.clientHeight < 50);
   const scrollPos = cm ? cm.scrollTop : 0;
+
   loadBookings();
+
   if (prevId) {
     showDetail(prevId);
     if (!atBottom) {

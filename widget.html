@@ -312,7 +312,16 @@ function saveDialog() {
   try {
     var dialogs = JSON.parse(localStorage.getItem('smilecare_dialogs') || '[]');
     var idx = dialogs.findIndex(function(d){ return d.sessionId === sessionId; });
-    var entry = { sessionId: sessionId, lang: lang, channel: 'widget', updatedAt: new Date().toISOString(), conversation: convMessages.slice() };
+    var merged = convMessages.slice();
+    if (idx >= 0 && dialogs[idx].conversation) {
+      dialogs[idx].conversation.forEach(function(om) {
+        if (om.role === 'operator') {
+          var dup = merged.some(function(m){ return m.role==='operator' && m.text===om.text && m.time===om.time; });
+          if (!dup) merged.push(om);
+        }
+      });
+    }
+    var entry = { sessionId: sessionId, lang: lang, channel: 'widget', updatedAt: new Date().toISOString(), conversation: merged };
     if (idx >= 0) dialogs[idx] = entry; else dialogs.unshift(entry);
     localStorage.setItem('smilecare_dialogs', JSON.stringify(dialogs.slice(0,50)));
   } catch(e) {}

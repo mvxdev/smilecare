@@ -468,15 +468,9 @@ async function send(text) {
   addMsg(text, 'usr');
   chatHistory.push({ role: 'user', content: text });
 
-  // Human mode block
+  // Human mode block — молча блокируем ИИ
   if (isHumanMode()) {
     updateStoredConversation();
-    if (!_humanNotified) {
-      _humanNotified = true;
-      addMsg(T[lang].operatorWait, 'bot');
-      chatHistory.push({ role: 'assistant', content: T[lang].operatorWait });
-      updateStoredConversation();
-    }
     return;
   }
 
@@ -530,7 +524,14 @@ window.confirmBooking = function(yes) {
     setQR(tr.qr2);
     lastBookingId = bookingId;
     bookingId = null;
-    sessionId = 'sess_' + Date.now();
+    // НЕ сбрасываем sessionId — диалог продолжается в той же сессии
+    // Пересчитываем _lastOpCount чтобы не дублировать уже показанные operator-msgs
+    try {
+      var dlgs = JSON.parse(localStorage.getItem('smilecare_dialogs') || '[]');
+      var dlgE = dlgs.find(function(d){ return d.sessionId === sessionId; });
+      _lastOpCount = dlgE && dlgE.conversation ? dlgE.conversation.filter(function(m){ return m.role === 'operator'; }).length : 0;
+    } catch(e) { _lastOpCount = 0; }
+    _humanNotified = false;
   } else {
     addMsg(lang === 'ru' ? 'Конечно! Что хотите изменить?' : 'Desigur! Ce doriți să modificați?', 'bot');
     chatHistory.push({ role: 'assistant', content: lang === 'ru' ? 'Конечно! Что хотите изменить?' : 'Desigur! Ce doriți să modificați?' });

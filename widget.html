@@ -312,17 +312,7 @@ function saveDialog() {
   try {
     var dialogs = JSON.parse(localStorage.getItem('smilecare_dialogs') || '[]');
     var idx = dialogs.findIndex(function(d){ return d.sessionId === sessionId; });
-    // Preserve operator messages that admin wrote — don't overwrite them
-    var merged = convMessages.slice();
-    if (idx >= 0 && dialogs[idx].conversation) {
-      dialogs[idx].conversation.forEach(function(om) {
-        if (om.role === 'operator') {
-          var already = merged.some(function(m){ return m.role === 'operator' && m.text === om.text && m.time === om.time; });
-          if (!already) merged.push(om);
-        }
-      });
-    }
-    var entry = { sessionId: sessionId, lang: lang, channel: 'widget', updatedAt: new Date().toISOString(), conversation: merged };
+    var entry = { sessionId: sessionId, lang: lang, channel: 'widget', updatedAt: new Date().toISOString(), conversation: convMessages.slice() };
     if (idx >= 0) dialogs[idx] = entry; else dialogs.unshift(entry);
     localStorage.setItem('smilecare_dialogs', JSON.stringify(dialogs.slice(0,50)));
   } catch(e) {}
@@ -394,7 +384,14 @@ function updateStoredConversation() {
     var stored = JSON.parse(localStorage.getItem('smilecare_bookings') || '[]');
     var idx = stored.findIndex(function(b){ return b.id === bookingId; });
     if (idx >= 0) {
-      stored[idx].conversation = convMessages.slice();
+      // Preserve operator messages already in booking
+      var existingOps = (stored[idx].conversation || []).filter(function(m){ return m.role === 'operator'; });
+      var merged = convMessages.slice();
+      existingOps.forEach(function(om) {
+        var already = merged.some(function(m){ return m.role === 'operator' && m.text === om.text && m.time === om.time; });
+        if (!already) merged.push(om);
+      });
+      stored[idx].conversation = merged;
       localStorage.setItem('smilecare_bookings', JSON.stringify(stored));
     }
   } catch(e) {}
@@ -415,11 +412,6 @@ function isHumanMode() {
 function startPolling() {
   if (_pollStarted) return;
   _pollStarted = true;
-  window.addEventListener('storage', function(e) {
-    if (e.key === 'smilecare_human_modes' || e.key === 'smilecare_dialogs' || e.key === 'smilecare_bookings') {
-      pollAdmin();
-    }
-  });
   setInterval(pollAdmin, 2000);
 }
 
@@ -538,14 +530,7 @@ window.confirmBooking = function(yes) {
     setQR(tr.qr2);
     lastBookingId = bookingId;
     bookingId = null;
-    // НЕ сбрасываем sessionId — диалог продолжается в той же сессии
-    // Пересчитываем _lastOpCount чтобы не дублировать уже показанные operator-msgs
-    try {
-      var dlgs = JSON.parse(localStorage.getItem('smilecare_dialogs') || '[]');
-      var dlgE = dlgs.find(function(d){ return d.sessionId === sessionId; });
-      _lastOpCount = dlgE && dlgE.conversation ? dlgE.conversation.filter(function(m){ return m.role === 'operator'; }).length : 0;
-    } catch(e) { _lastOpCount = 0; }
-    _humanNotified = false;
+    sessionId = 'sess_' + Date.now();
   } else {
     addMsg(lang === 'ru' ? 'Конечно! Что хотите изменить?' : 'Desigur! Ce doriți să modificați?', 'bot');
     chatHistory.push({ role: 'assistant', content: lang === 'ru' ? 'Конечно! Что хотите изменить?' : 'Desigur! Ce doriți să modificați?' });

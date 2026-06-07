@@ -741,11 +741,23 @@ function loadBookings() {
   } catch(e){}
   // Also load dialogs without bookings
   let dialogs = [];
+  let rawDialogs = [];
   try {
-    const raw = JSON.parse(localStorage.getItem('smilecare_dialogs')||'[]');
+    rawDialogs = JSON.parse(localStorage.getItem('smilecare_dialogs')||'[]');
+    // Merge dialog conversations into bookings with same sessionId (post-confirmation messages)
+    const dialogMap = new Map(rawDialogs.map(d=>[d.sessionId, d]));
+    stored = stored.map(b => {
+      if (b.sessionId && dialogMap.has(b.sessionId)) {
+        const dlg = dialogMap.get(b.sessionId);
+        if (dlg.conversation && dlg.conversation.length > (b.conversation||[]).length) {
+          return {...b, conversation: dlg.conversation};
+        }
+      }
+      return b;
+    });
     // Only include dialogs not already in bookings (by sessionId)
     const bookedSessions = new Set(stored.map(b=>b.sessionId).filter(Boolean));
-    dialogs = raw
+    dialogs = rawDialogs
       .filter(d => !bookedSessions.has(d.sessionId) && d.conversation && d.conversation.length > 1)
       .map(d => ({
         id: 'dlg_' + d.sessionId,
@@ -1159,7 +1171,7 @@ function exportChat(id){
   lines.push(tr.fldCh + ': ' + (b.channel==='whatsapp'?tr.chWA:tr.chWidget));
   lines.push('─'.repeat(40));
   (b.conversation||[]).forEach(m=>{
-    const who = m.role==='bot' ? 'Diana AI' : m.role==='operator' ? 'Администратор' : 'Пациент / Pacient';
+    const who=m.role==='bot'?'Diana AI':'Пациент / Pacient';
     lines.push('[' + (m.time||'') + '] ' + who + ':');
     lines.push(m.text||'');
     lines.push('');
